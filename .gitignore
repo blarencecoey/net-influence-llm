@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# Secrets
+.env
+
+# Run outputs (keep the folder, not the contents)
+runs/*
+!runs/.gitkeep
+
+# Obsidian per-device state
+notes/.obsidian/workspace*.json
+notes/.obsidian/cache
+.trash/
+
+# OS
+.DS_Store
