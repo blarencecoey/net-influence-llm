@@ -22,6 +22,8 @@ Index of `notes/papers/`. Notes, not report prose. Each row links a note with a 
 
 Background and threat models: [[fish-2024]] (tacit LLM pricing collusion), [[motwani-2024]] (steganographic collusion), [[zeng-rudzicz-2026]] (voluntary uptake of collusion tools), [[guo-2025]] (LLMs fail to randomize in RPS).
 
+Broader loss-of-control framing (why collusion breaks monitor-based control protocols): [[loss-of-control-survey]].
+
 Methods: [[estimation]], [[runge-2018]].
 
 ## Answer to "has anyone done this?"
