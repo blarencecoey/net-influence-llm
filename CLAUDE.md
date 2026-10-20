@@ -30,6 +30,13 @@ Sprint page: https://apartresearch.com/sprints/ai-collusion-research-sprint-2026
 - **Log every run.** Each experiment writes its config, seed, model IDs, prompts and cost alongside outputs in `runs/`, and gets a short entry in `notes/lab-log.md`. Lab-log entries are the author's; Claude may append a factual `[claude]` line (what ran, where outputs are).
 - **Report variance.** Results across seeds with spread, never a single run. Report top-pair accuracy and TPR at fixed FPR (1%, 5%).
 
+## Verification rules
+
+- **Never assume when stating facts or quoting sources.** Do not fill gaps from memory, paraphrase a source you have not read, or attribute a claim, number or definition to a paper, page or person without checking it.
+- **Verify before making any claim.** Open the primary source (the paper PDF, official page, repo or data) and confirm the exact wording, numbers and context before stating it, quoting it or writing it into `notes/`, code comments or review comments. Search results, abstracts and secondhand summaries are not verification.
+- **Say so when you cannot verify.** If a source cannot be reached or does not say it, state that plainly and mark the claim unverified (e.g. `[unverified: abstract only]`) rather than guessing.
+- **Separate source from inference.** When reasoning beyond what a source says, label it as your own inference, not the source's claim.
+
 ## Knowledge base (`notes/`, an Obsidian vault)
 
 - `notes/papers/<firstauthor>-<year>.md`: one note per source. Frontmatter: `title`, `authors`, `venue`, `link`, optional `code`, `tags`. Sections: what they did, results with numbers, stated limitations, **Why it matters for us**. Record only what the source says; mark anything unverified (abstract-only, secondhand).
