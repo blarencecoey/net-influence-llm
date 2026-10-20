@@ -44,24 +44,23 @@ flowchart LR
 
 ### 2. From sources to hypotheses
 
-Papers are grouped by the role they play; each arrow shows which hypothesis a group of papers motivates. The detector and its alternatives define the gap the whole project fills. Full notes are in [`notes/papers/`](notes/papers/), indexed in [`notes/lit-review.md`](notes/lit-review.md).
+Papers are grouped by the role they play; each arrow shows which hypothesis a group of papers motivates. The detector and its alternatives define the gap the whole project fills; the grey box is background framing from [`notes/loss-of-control-survey.md`](notes/loss-of-control-survey.md); it also ties to H1, since same-family shared priors weaken monitor–actor independence. Full notes are in [`notes/papers/`](notes/papers/), indexed in [`notes/lit-review.md`](notes/lit-review.md).
 
 ```mermaid
-flowchart LR
-    P0["<b>Detector</b><br/>Bonjour et al. 2022<br/><i>net influence, assumes 2 colluders</i>"]
+flowchart TB
     P4["<b>Alternative detectors</b><br/>Rose et al. 2026: activation probes, also k = 2<br/>Nakamura et al. 2026 · Agrawal et al. 2025: LLM judges"]
-    P1["<b>Shared priors</b><br/>Xu et al. 2026: same-model coupling +0.053 vs ~0<br/>Guo et al. 2025: LLMs fail to randomize in RPS"]
-    P2["<b>Tacit / history-based collusion</b><br/>Fish et al. 2024 · Eschenbaum & Meylahn 2026<br/>Lee & Park 2026"]
-    P3["<b>Estimation and nulls</b><br/>Riedl 2026 · Runge 2018 · Tailor 2025"]
-    P5["<b>Detectability limits</b><br/>Ghanem 2026 · Motwani et al. 2024"]
-
+    P0["<b>Detector</b><br/>Bonjour et al. 2022<br/><i>net influence, assumes 2 colluders</i>"]
+    P6["<b>Threat-model background</b><br/>Loss-of-control survey: Hammond et al. 2025,<br/>Greenblatt et al. 2024 (AI control)<br/><i>collusion breaks monitor-based protocols</i>"]
     GAP(["<b>Gap</b><br/>No prior application of net influence<br/>to LLM agents; no public implementation"])
-
+    P1["<b>Shared priors</b><br/>Xu et al. 2026: same-model coupling +0.053 vs ~0<br/>Guo et al. 2025: LLMs fail to randomize in RPS"]
     H1["<b>H1 Shared priors</b><br/>same-family honest pairs → false positives"]
+    P2["<b>Tacit / history-based collusion</b><br/>Fish et al. 2024 · Eschenbaum & Meylahn 2026<br/>Lee & Park 2026"]
     H2["<b>H2 Tacit collusion</b><br/>same-round metric misses it,<br/>lagged variant catches it"]
-    H3["<b>H3 Dose response</b><br/>net influence rises with collusion strength"]
+    P3["<b>Estimation and nulls</b><br/>Riedl 2026 · Runge 2018 · Tailor 2025"]
     H4["<b>H4 Calibration</b><br/>calibrated null beats fixed α = 0.05"]
+    H3["<b>H3 Dose response</b><br/>net influence rises with collusion strength"]
     A1["<b>Two-colluder assumption</b><br/>tested in C4 (stretch)"]
+    P5["<b>Detectability limits</b><br/>Ghanem 2026 · Motwani et al. 2024"]
     LIM[["Limitations & dual-use tracker"]]
 
     P0 --> GAP
@@ -73,12 +72,16 @@ flowchart LR
     P0 --> A1
     P4 --> A1
     P5 --> LIM
+    P6 --> GAP
+    A1 ~~~ GAP
 
     classDef src fill:#e8eefc,stroke:#4a6cd4,color:#1a2a55
     classDef gap fill:#f3e8fc,stroke:#8a4ad4,color:#2e1050
     classDef hyp fill:#fff4e0,stroke:#d4912a,color:#4a3000
     classDef lim fill:#fde8e8,stroke:#c94a4a,color:#4a1010
+    classDef bg fill:#eef0f2,stroke:#6b7480,color:#22282e,stroke-dasharray: 4 3
     class P0,P1,P2,P3,P4,P5 src
+    class P6 bg
     class GAP gap
     class H1,H2,H3,H4,A1 hyp
     class LIM lim
