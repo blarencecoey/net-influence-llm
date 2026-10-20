@@ -34,6 +34,10 @@ scripts/        entry points for running experiments
 tests/          unit tests for the estimators
 runs/           raw run outputs (gitignored)
 notes/          research notes; open this folder as an Obsidian vault
+  papers/       one note per source
+  methods/      estimator and statistics notes
+  lit-review.md index of sources and evidence per hypothesis
+  limitations-and-ethics.md   tracker for the required appendix
 ```
 
 ## Setup
