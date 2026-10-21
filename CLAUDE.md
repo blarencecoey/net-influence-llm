@@ -4,7 +4,7 @@ Context for Claude Code working in this repo.
 
 ## Project
 
-Apart Research AI Collusion Research Sprint (Oct 23–25, 2026), Track 1, research question 1.4: apply Bonjour et al. (2022) pairwise net influence to LLM agents and test whether it survives shared priors and tacit coordination. Read `notes/00-plan.md` before starting work, then `notes/lit-review.md` and `notes/methods/estimation.md`.
+Apart Research AI Collusion Research Sprint (Oct 23–25, 2026), Track 1, research question 1.4: apply Bonjour et al. (2022) pairwise net influence to LLM agents and test whether it survives shared priors and tacit coordination. Read `notes/track-brief.md` (the official 1.4 brief) and `notes/00-plan.md` before starting work, then `notes/lit-review.md` and `notes/methods/estimation.md`.
 
 Sprint page: https://apartresearch.com/sprints/ai-collusion-research-sprint-2026-10-23-to-2026-10-25
 
@@ -17,7 +17,8 @@ Sprint page: https://apartresearch.com/sprints/ai-collusion-research-sprint-2026
   - Any vendored or adapted third-party code gets a row in `PRIOR_WORK.md` with source and license.
 - **AI use = a colleague.** Claude may write and debug code, run analyses, check reasoning, find gaps, and review drafts.
 - **The report is the author's own writing.** Do not write report prose in `notes/report-draft.md` or anywhere meant for the report. Comments, checklists, and factual corrections are fine; mark them `> [claude]`. Reports that read as generated (generic framing, padded sections, unsourced claims, no trace of what was done) are not scored.
-- **Required report contents:** PDF on the official template; abstract ≤ 150 words; authors and affiliations; Introduction, Related Work, Methodology (replicable), Results (variance, seeds, baselines, always the positive control), Discussion, **Limitations and Dual-Use / Ethical Considerations**, References. Target 4–8 pages.
+- **Required report contents:** PDF on the official template; abstract 150–250 words (official template); authors and affiliations; Introduction (with a numbered contributions list), Related Work, Methods (replicable), Results (variance, seeds, baselines, always the positive control), Discussion and Limitations (incl. Future Work), **Limitations and Dual-Use / Ethical Considerations**, Conclusion, Code and Data, References, optional Appendix, and an **LLM Usage Statement**. Template recommends 4 pages excluding references and appendix (Intro & Related Work ~1p, Methods + Results ~2.5p, Discussion ~0.5p).
+  - > [claude] Earlier versions of this file said "abstract ≤ 150 words" and "4–8 pages", from the sprint page. The official template (2026-10-21) says 150–250 words and ~4 pages. The sprint page could not be re-checked from this session `[unverified]`. An abstract of ~150 words satisfies both.
 - **Judging:** impact & innovation (novelty beyond replication), execution quality, presentation & clarity. Keep work pointed at what is new: net influence on LLM agents, shared-prior false positives, lagged variant, calibrated threshold.
 - **Budget:** CPU-only laptop plus cheap API models. Sprint estimate: $0 scripted, ~$5–50 LLM pilot. Log spend per run.
 

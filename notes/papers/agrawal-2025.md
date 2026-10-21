@@ -3,8 +3,8 @@ title: Evaluating LLM Agent Collusion in Double Auctions
 authors: Agrawal, Teo, Vazquez, Kunnavakkam, Srikanth, Liu
 venue: arXiv 2507.01413 (ICML 2025 workshop listing)
 link: https://arxiv.org/abs/2507.01413
-code: not linked in paper; sprint starter code references "the Agrawal double-auction environment"
-tags: [environment, market, stretch]
+code: https://github.com/andyjliu/llm-agent-collusion
+tags: [environment, market, target-environment]
 ---
 
 # Agrawal et al. 2025
@@ -23,4 +23,6 @@ tags: [environment, market, stretch]
 ## Why it matters for us (stretch environment)
 - **Sample size is the blocker:** 30 rounds × 10 sessions with continuous-ish prices. Plug-in CMI needs ask prices binned to 2–3 levels and state ≈ nothing, or pooling across sessions. See [[estimation]].
 - 5 sellers = 10 unordered pairs; good test of the max-over-others term and of >2 colluders (all sellers can talk).
+- Code: [andyjliu/llm-agent-collusion](https://github.com/andyjliu/llm-agent-collusion), the repo for this paper (arXiv 2507.01413); continuous double auction in `src/continuous_double_auction/`. No license file seen on the repo page (checked 2026-10-21) `[unverified: license]`; confirm before vendoring.
+- The official 1.4 brief ([[track-brief]]) names this auction as the **target environment** under the Markets and Collusion track, and frames a validated dependence statistic as a quantitative *plus factor* for market cases.
 - Any vendored code → row in PRIOR_WORK.md.

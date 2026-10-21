@@ -54,8 +54,19 @@ Collusion-strength sweep: channel delivered with probability p ∈ {0.1, 0.3, 0.
 |---|---|---|
 | 2026-10-16 | Q1.4 chosen | Published detector, never tried on LLM agents; matches quant background |
 
+## Divergences from the official brief
+
+> [claude] Added 2026-10-21 after comparing this plan with [[track-brief]]. These are flags for Clarence to decide, not changes to the plan.
+>
+> 1. **Run length.** The brief suggests 20–40 LLM games of 15–25 rounds; this plan uses ~200 rounds × 5 seeds per condition. My inference, using the bias rule of thumb in `CLAUDE.md` (~2|S|/N nats): a single 25-round game with 9 states gives bias ≈ 0.72 nats, far above α = 0.05, so short games only work if pooled (40 × 25 = 1000 rounds → ≈ 0.018). Decide which design to use and record it in the decision log.
+> 2. **Auction's role.** The brief makes the Agrawal double auction the *target* environment (Markets and Collusion track) and RPS the validation step. This plan and the README list the market as a stretch goal. Worth deciding whether that stays, given the brief's "plus factor" framing.
+> 3. **Baselines match.** The brief's three-way comparison (net influence vs action correlation vs LLM judge) is covered by detectors 1, 4 and 5 above.
+> 4. **Budget matches** ($0 scripted, ~$5–50 LLM pilot).
+
 ## Open questions
 
 - Which cheap models for same-family vs cross-family?
 - State abstraction for LLM RPS: own last action + last outcome, or last joint action?
 - How to get LLMs to randomize (temperature 1, or ask for a distribution and sample)?
+- Follow the brief's short-game design (pooled) or keep ~200-round runs? (see Divergences)
+- Is the double auction the target environment or a stretch goal? (see Divergences)

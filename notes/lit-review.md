@@ -26,6 +26,8 @@ Broader loss-of-control framing (why collusion breaks monitor-based control prot
 
 Methods: [[estimation]], [[runge-2018]].
 
+Official research-question brief: [[track-brief]].
+
 ## Answer to "has anyone done this?"
 
 - **Net influence on LLM agents: not found.** No paper among those read cites Bonjour et al. or applies it to LLMs. Rose et al. (the Q1.4 alternative) doesn't cite it either. Searched 2026-10-20; re-check Friday.
