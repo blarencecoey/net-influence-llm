@@ -50,6 +50,15 @@ def test_game_detail_ranks_seeded_pair_first(runs):
     json.dumps(d, allow_nan=False)  # NaN diagonals must be cleaned to null
 
 
+def test_judge_scores_shown_even_when_partial(runs):
+    rid = next(e["id"] for e in v.list_runs(runs) if e.get("condition") == "C2")
+    tp = v.run_detail(runs, rid)["true_pair"]
+    other = next(f"{i}-{j}" for i in range(4) for j in range(i + 1, 4) if f"{i}-{j}" != tp)
+    (runs / rid / "judge.json").write_text(json.dumps({"scores": {other: 0.9}}))
+    judge = v.run_detail(runs, rid)["detectors"]["state_free"]["judge"]
+    assert judge["ranked"][0]["pair"] == other and "true_rank" not in judge
+
+
 def test_summary_covers_conditions_and_heldout(runs):
     s = v.summary(runs)
     assert {r["label"] for r in s["summary"]} == {"C0", "C2 p=1"}
