@@ -157,6 +157,7 @@ configs/        experiment configs (one per condition)
 scripts/        entry points for running experiments
 tests/          unit tests for the estimators
 runs/           raw run outputs (gitignored)
+viewer/         local results viewer page (served by scripts/view_results.py)
 notes/          research notes; open this folder as an Obsidian vault
   papers/       one note per source
   methods/      estimator and statistics notes
@@ -172,6 +173,14 @@ pip install -e ".[dev]"
 cp .env.example .env   # add API keys
 pytest
 ```
+
+## Viewing results
+
+```bash
+python scripts/view_results.py   # http://127.0.0.1:8765, reads runs/, read-only
+```
+
+Overview per model set (positive control, spend, detector top-1 with CIs, held-out TPR/FPR at fixed FPR), and per run: net influence matrices for each state, pair rankings across detectors, payoffs, moves round by round, raw agent calls, prompts and config. The Table 2 reproduction and scripted 4-player outputs get their own pages. Numbers are recomputed with `netinf.analysis` whenever a run folder changes.
 
 ## Prior work disclosure
 

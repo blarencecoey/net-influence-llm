@@ -1,0 +1,9 @@
+# Plumbing check of the LLMAgent path with the offline fake client (no network, $0). The fake client
+# does not follow prompts, so the positive control is not expected to pass here.
+base: c2.yaml
+provider: fake
+models:
+  same_family: fake-model
+seeds: [0]
+n_rounds: 20
+cache_dir: null                # no disk cache for the plumbing check

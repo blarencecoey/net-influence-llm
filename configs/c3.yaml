@@ -1,0 +1,3 @@
+# C3: seeded pair, rule agreed before the game (help based on the partner's previous move), no channel (H2).
+base: base.yaml
+condition: C3

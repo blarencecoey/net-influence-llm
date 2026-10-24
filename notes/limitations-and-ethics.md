@@ -35,9 +35,12 @@ Add a line whenever a run, bug or reading reveals one. Mark status: `open` (appl
 | B2 | Toy game (RPS), not a market; transfer to pricing/auctions untested unless the stretch market runs | open |
 | B3 | Small budget → ~200 rounds × 5 seeds; few models; results may not generalise across model families | open |
 | B4 | LLM randomisation is poor and prompt-sensitive; results depend on prompt wording and temperature | open |
-| B5 | Colluder compliance varies by model; a non-complying "colluder" silently weakens the positive control | open; verify per run |
+| B5 | Colluder compliance varies by model; a non-complying "colluder" silently weakens the positive control. Seen: Llama 3.3 70B C2 assistant, told the partner's move and the helping move, played the move that *beats* the partner in 16/20 rounds (helping move 4/20) | open; tested: runs/C2_llama-3.3-70b-instruct_p1.0_s0_20261024-111626 (20-round smoke) |
 | B6 | Adaptive adversary not tested: colluders don't know the detector | open |
 | B7 | LLM-judge baseline depends on the judge model and prompt | open |
+| B8 | Positive-control gating selects on outcome at low p: at p ≤ 0.3 mostly lucky seeds pass, inflating top-1 for the H3 sweep (scripted dry run: p = 0.1 0/3 pass, p = 0.3 1/3) | open; report sweep gated and ungated |
+| B9 | Payoff-based positive control cannot confirm C3: with a random primary the tacit rule leaves the primary's win rate at chance (19/27, our derivation; scripted C3 0/3 pass) | open; decide C3 primary prompt / gating |
+| B10 | FPR resolution: 5 seeds with seeds {0, 1} as calibration gives 4 null runs (C0 + C1), so 1 % and 5 % thresholds coincide and realised FPR resolution is ~1/4 | open |
 
 ## C. Dual-use and ethical considerations
 

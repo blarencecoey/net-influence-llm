@@ -1,0 +1,4 @@
+# Dry run of c2_sweep.yaml with scripted agents ($0, no API, seconds).
+base: c2_sweep.yaml
+provider: scripted
+seeds: [0, 1, 2]

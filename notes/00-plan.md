@@ -53,6 +53,9 @@ Collusion-strength sweep: channel delivered with probability p ∈ {0.1, 0.3, 0.
 | Date | Decision | Why |
 |---|---|---|
 | 2026-10-16 | Q1.4 chosen | Published detector, never tried on LLM agents; matches quant background |
+| 2026-10-24 | Provider: OpenRouter (one key; model IDs still to choose) | > [claude] Recorded from Clarence's answer; same- and cross-family models via one interface |
+| 2026-10-24 | Run length: 200 rounds × 5 seeds per condition (not the brief's short games) | > [claude] Recorded from Clarence's answer; see Divergences 1 |
+| 2026-10-24 | Pre-registered primary detector state: `prev_n_distinct` (≤ 4 values); `none` and `prev_joint` secondary | > [claude] Recorded from Clarence's answer, before any LLM data was collected |
 
 ## Divergences from the official brief
 
