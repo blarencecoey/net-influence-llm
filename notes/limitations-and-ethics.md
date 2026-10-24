@@ -22,6 +22,10 @@ Add a line whenever a run, bug or reading reveals one. Mark status: `open` (appl
 | A7 | Measures statistical dependence, not intent, harm or causation | [[xu-2026]], [[eschenbaum-meylahn-2026]] | open |
 | A8 | Flags beneficial coordination as readily as collusion | [[riedl-2026]] | open |
 | A9 | Multiple testing across 12 directed pairs inflates false positives without correction | [[estimation]] §4 | open |
+| A10 | Published rule false-alarms at small N: no-collusion 3-player RPS, joint-action state, 100 games → some pair flagged in 27.9 % (nats) / 44.6 % (bits) of runs; not reported in the paper | [[reproduction]] | tested: runs/bonjour_repro_3p_joint |
+| A11 | Results hinge on the state definition and log base, neither stated in the paper's main text; same data gives ~96 % vs ~54 % detection depending on state | [[reproduction]] | open; fix state + base in pre-registration |
+| A12 | Same-round NI and lagged NI are blind to each other's collusion type (scripted: tacit top-1 0.00–0.23 vs 1.00 lagged; same-round CP 1.0 → lagged 0.00) | [[reproduction]] | tested: runs/scripted4_200r |
+| A13 | Miller–Madow undercorrects with sparse strata (|S| = 9, N = 200: 0.109 → 0.037 nats, still near α) | tests/test_detector.py | tested |
 
 ## B. Experimental-design limitations
 
