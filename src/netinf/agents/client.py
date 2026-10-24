@@ -35,6 +35,7 @@ import os
 import random
 import threading
 import time
+import warnings
 from collections.abc import Callable
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -241,7 +242,11 @@ class BaseClient:
             cost = (n_in * p_in + n_out * p_out) / 1e6
         if cache_path is not None:
             resp = {"text": text, "model": echoed, "input_tokens": n_in, "output_tokens": n_out}
-            _write_atomic(cache_path, {"request": request, "response": resp})
+            try:
+                _write_atomic(cache_path, {"request": request, "response": resp}, self._sleep)
+            except OSError as err:  # the cache is an optimisation; never lose a paid call to it
+                warnings.warn(f"cache write failed, response not cached: {err}", RuntimeWarning,
+                              stacklevel=2)
         with self._lock:
             u = self._usage
             u.calls += 1
@@ -269,11 +274,24 @@ class BaseClient:
         raise AssertionError("unreachable")
 
 
-def _write_atomic(path: Path, obj: dict) -> None:
+def _write_atomic(path: Path, obj: dict, sleep: Callable[[float], None] = time.sleep,
+                  attempts: int = 5) -> None:
+    """Write via a temp file and os.replace. On Windows the replace raises PermissionError while
+    another process (a reader, an indexer) holds the target open, so it is retried briefly."""
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.parent / f"{path.name}.{os.getpid()}.{threading.get_ident()}.tmp"
     tmp.write_text(json.dumps(obj, ensure_ascii=False), encoding="utf-8")
-    os.replace(tmp, path)
+    try:
+        for attempt in range(attempts):
+            try:
+                os.replace(tmp, path)
+                return
+            except PermissionError:
+                if attempt == attempts - 1:
+                    raise
+                sleep(0.05 * 2**attempt)
+    finally:
+        tmp.unlink(missing_ok=True)
 
 
 class FakeClient(BaseClient):
@@ -313,6 +331,8 @@ class OpenAIClient(BaseClient):
         resp = self._client.chat.completions.create(
             model=model, messages=messages, temperature=temperature, **{limit: max_tokens}, **extra
         )
+        if not resp.choices:  # OpenRouter can answer 200 with an error body and no choices
+            raise TransientError(f"no choices in response: {getattr(resp, 'error', None)}")
         usage = resp.usage
         return (
             resp.choices[0].message.content or "",

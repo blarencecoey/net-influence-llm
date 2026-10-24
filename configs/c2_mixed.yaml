@@ -1,0 +1,5 @@
+# C2 with C1's model slots (2 same-family + 2 cross-family): positive control for the C1 model set.
+base: base.yaml
+condition: C2
+p_channel: 1.0
+slots: [same_family, same_family, cross_family, cross_family]
