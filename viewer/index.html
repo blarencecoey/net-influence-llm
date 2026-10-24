@@ -416,12 +416,14 @@ async function render() {
       const ent = S.runs.find(e => e.id === r.id);
       if (r.id !== S.lastRun && ent?.status === "live") S.ui.tab = "turns";  // opening a live run: watch it
       S.lastRun = r.id;
-      if (S.details[r.id]?._stale && S.ui.tab !== "turns") delete S.details[r.id];
+      const old = S.details[r.id];  // _stale: rounds arrived in Turns; _partial: only detection fields are current
+      if (old && (old._stale && S.ui.tab !== "turns" || old._partial && !["turns", ...LIVE_TABS].includes(S.ui.tab))) delete S.details[r.id];
       if (!S.details[r.id]) { view.innerHTML = `<div class="loading">Loading ${esc(r.id)}…</div>`; S.details[r.id] = await getJSON(`/api/run/${encodeURIComponent(r.id)}`); }
       const d = S.details[r.id];
       view.innerHTML = d.kind === "game" ? gamePage(d) : d.kind === "bonjour_repro" ? bonjourPage(d) : d.kind === "scripted4" ? scripted4Page(d) : otherPage(d);
       if (d.kind === "game" && S.ui.tab === "turns") startTurns(d.id); else stopTurns();
-    } else { stopTurns(); view.innerHTML = overviewPage(); }
+      if (d.kind === "game" && LIVE_TABS.includes(S.ui.tab) && d.status !== "done") startDetect(d.id); else stopDetect();
+    } else { stopTurns(); stopDetect(); view.innerHTML = overviewPage(); }
     view.querySelectorAll("[data-seg]").forEach(el => el.addEventListener("click", async ev => {
       const b = ev.target.closest("button"); if (!b) return;
       const key = el.dataset.seg; S.ui[key] = b.dataset.v; if (key !== "callsPage") S.ui.callsPage = 0; saveUI();
@@ -597,7 +599,7 @@ function detectionTab(d, L) {
   const M = mk === "gamma" ? E.gamma : mk === "lagged_netinf" ? D.state_free.lagged_netinf.matrix : E[mk].matrix;
   const T = d.rounds.actions.length;
   let h = `<section><h3>Net influence</h3>
-  <p class="note">Entry [i, j] is Γ(i; j) = γ(i; j) − max<sub>k≠i,j</sub> γ(k; j) with γ the conditional mutual information given the state (nats). Algorithm 1 flags a pair when Γ ≥ α = ${D.alpha} both ways and exactly one pair passes. The seeded pair is outlined.</p>
+  <p class="note">Entry [i, j] is Γ(i; j) = γ(i; j) − max<sub>k≠i,j</sub> γ(k; j) with γ the conditional mutual information given the state (nats). Algorithm 1 flags a pair when Γ ≥ α = ${D.alpha} both ways and exactly one pair passes. The seeded pair is outlined.${liveNote(d)}</p>
   <div class="row"><label>State</label>${seg("state", states.map(x => [x, stateName(x) + (E && x === S.summary.primary_state ? " ★" : "")]), st)}<label style="margin-left:8px">Matrix</label>${seg("matrix", mats, mk)}</div>
   <div class="callout ${E.bias > D.alpha ? "warn" : "info"}">${E.n_states} state value(s) over ${T} rounds: plug-in bias ≈ 2|S|/N = <b>${f(E.bias)}</b> nats ${E.bias > D.alpha ? "&gt;" : "≤"} α = ${D.alpha}${E.bias > D.alpha ? ". Algorithm 1 false alarms are likely at this length." : "."} State role: ${esc(E.role)}.</div>
   <div class="grid g2" style="align-items:start">
@@ -629,7 +631,7 @@ function playTab(d, L) {
   const sums = new Array(n).fill(0);
   for (let t = 0; t < T; t++) for (let i = 0; i < n; i++) { sums[i] += P[t][i]; cum[i].push([t + 1, sums[i]]); }
   const exp = d.chance_win_rate;
-  let h = `<section><h3>Cumulative payoff</h3><p class="note">Dashed line: expected total under uniform random play (${pct(exp, 1)} win rate per round).</p>`;
+  let h = `<section><h3>Cumulative payoff</h3><p class="note">Dashed line: expected total under uniform random play (${pct(exp, 1)} win rate per round).${liveNote(d)}</p>`;
   h += legend([...L.map((l, i) => ({ name: `${l.long} · ${l.model}`, color: pcol(i) })), { name: "uniform-play expectation", color: "var(--muted)", dash: 1 }]);
   h += lineChart({ series: [...cum.map((pts, i) => ({ name: L[i].long, color: pcol(i), points: pts, width: L[i].role !== "honest" ? 2.6 : 1.6 })),
                             { name: "expected", color: "var(--muted)", dash: "4 4", width: 1.2, points: [[0, 0], [T, T * exp]] }],
@@ -676,6 +678,38 @@ function filesSection(d) {
   return `<section><h3>Files</h3>` + table([{ h: "Path", v: x => `<a href="/files/${encodeURIComponent(d.id)}/${x.path.split("/").map(encodeURIComponent).join("/")}" target="_blank">${esc(x.path)}</a>` },
     { h: "Size", r: 1, v: x => x.size < 1024 ? x.size + " B" : (x.size / 1024).toFixed(1) + " KB" }], d.files) + `</section>` +
     imgs.map(x => `<section><h3>${esc(x.path)}</h3><img class="result" src="/files/${encodeURIComponent(d.id)}/${x.path.split("/").map(encodeURIComponent).join("/")}" alt="${esc(x.path)}"></section>`).join("");
+}
+
+// ------------------------------------------------------------------ live detection and play
+// While the Detection or Play tab is open on an unfinished run, polls /api/detect (rounds,
+// detectors and status only; the server recomputes them when the run folder changes) and merges the
+// result into the loaded run, so the tab follows the run round by round. Stops after the run is done.
+const LIVE_TABS = ["detection", "play"];
+const DP = { id: null, timer: null, busy: false };
+const liveNote = d => d.status !== "done" ? ` <b>Run in progress:</b> everything on this tab is recomputed on the ${d.rounds.actions.length} round(s) logged so far and updates as each new round is logged.` : "";
+function stopDetect() { clearTimeout(DP.timer); DP.id = null; }
+function startDetect(id) { if (DP.id !== id) { stopDetect(); DP.id = id; pollDetect(); } }
+async function pollDetect() {
+  if (DP.id == null || DP.busy) return;  // one request in flight at a time
+  const id = DP.id;
+  DP.busy = true;
+  let status = null;
+  try {
+    const fresh = await getJSON(`/api/detect/${encodeURIComponent(id)}`), d = S.details[id];
+    status = fresh.status;
+    const changed = d && (fresh.rounds.actions.length !== d.rounds.actions.length || fresh.status !== d.status);
+    if (DP.id === id && changed) {
+      Object.assign(d, fresh, { _partial: true });  // calls, prompts and files are now behind
+      delete d._stale;
+      const r = route();
+      if (r.page === "run" && r.id === id && LIVE_TABS.includes(S.ui.tab)) render();
+    }
+  } catch (e) {}  // keep polling; a transient read of a half-written file is retried
+  finally { DP.busy = false; }
+  if (DP.id !== id) return pollDetect();  // the user switched runs while this request was out
+  clearTimeout(DP.timer);
+  if (status === "done") return stopDetect();
+  DP.timer = setTimeout(pollDetect, status === "live" ? 1500 : 5000);
 }
 
 // ------------------------------------------------------------------ turn by turn (live + replay)

@@ -50,6 +50,14 @@ def test_game_detail_ranks_seeded_pair_first(runs):
     json.dumps(d, allow_nan=False)  # NaN diagonals must be cleaned to null
 
 
+def test_detection_is_detail_without_heavy_fields(runs):
+    rid = next(e["id"] for e in v.list_runs(runs) if e.get("condition") == "C2")
+    full, det = v.run_detail(runs, rid), v.run_detection(runs, rid)
+    assert det["detectors"] == full["detectors"] and det["rounds"] == full["rounds"]
+    assert not {"calls", "prompts", "files", "config_text"} & det.keys()
+    assert det["status"] == "done"
+
+
 def test_judge_scores_shown_even_when_partial(runs):
     rid = next(e["id"] for e in v.list_runs(runs) if e.get("condition") == "C2")
     tp = v.run_detail(runs, rid)["true_pair"]
@@ -136,10 +144,44 @@ def test_server_routes(runs):
         game = next(i for i in ids if i.startswith("C2"))
         t = json.loads(get(f"/api/tail/{game}?r=0&c=0")[1])
         assert len(t["rounds"]) == 150 and t["status"] == "done"
-        for bad in ("/files/x_notes/../x_bonjour/results.json", "/api/run/nope"):
+        assert len(json.loads(get(f"/api/detect/{game}")[1])["rounds"]["actions"]) == 150
+        for bad in ("/files/x_notes/../x_bonjour/results.json", "/api/run/nope",
+                    "/api/detect/x_bonjour"):
             with pytest.raises(urllib.error.HTTPError) as e:
                 get(bad)
             assert e.value.code == 404
+    finally:
+        srv.shutdown()
+        srv.server_close()
+
+
+def test_detect_route_recomputes_as_rounds_arrive(runs):
+    spec = importlib.util.spec_from_file_location("view_results", SCRIPT)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    rid = next(e["id"] for e in v.list_runs(runs) if e.get("condition") == "C2")
+    path = runs / rid
+    meta = json.loads((path / "meta.json").read_text())
+    (path / "meta.json").write_text(json.dumps(meta | {"completed": False}))
+    lines = (path / "rounds.jsonl").read_text().splitlines(keepends=True)
+    (path / "rounds.jsonl").write_text("".join(lines[:20]))
+    srv = ThreadingHTTPServer(("127.0.0.1", 0), mod.make_handler(runs, mod.Cache(runs)))
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+
+    def detect():
+        url = f"http://127.0.0.1:{srv.server_port}/api/detect/{rid}"
+        with urllib.request.urlopen(url, timeout=30) as r:
+            return json.loads(r.read())
+
+    try:
+        d1 = detect()
+        assert len(d1["rounds"]["actions"]) == 20 and d1["status"] == "live"
+        with open(path / "rounds.jsonl", "a") as f:  # the harness logs one more round
+            f.write(lines[20])
+        d2 = detect()
+        assert len(d2["rounds"]["actions"]) == 21
+        bias = [d["detectors"]["by_state"]["none"]["bias"] for d in (d1, d2)]
+        assert bias[1] < bias[0]  # recomputed on 21 rounds, not served from the cache
     finally:
         srv.shutdown()
         srv.server_close()
