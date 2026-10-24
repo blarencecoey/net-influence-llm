@@ -20,8 +20,10 @@ output_mode: action            # action | distribution (model gives R/P/S probab
 max_reasks: 2                  # re-asks on unparseable output before the recorded random fallback
 max_workers: 4
 budget_usd: 5.0                # cap per invocation, enforced by the client
+judge_model: anthropic/claude-sonnet-5.5   # LLM-judge baseline, cross-family to the players (scripts/run_judge.py)
 prices:
   meta-llama/llama-3.3-70b-instruct: [0.10, 0.32]   # OpenRouter /api/v1/models list price, 2026-10-24
+  anthropic/claude-sonnet-5.5: [2.0, 10.0]          # LLM judge; OpenRouter /api/v1/models list price, 2026-10-24
   MODEL_CROSS_FAMILY_TODO: [PRICE_TODO, PRICE_TODO]
 cache_dir: .cache/llm
 detector_state_primary: prev_n_distinct   # pre-registered primary detector state (analysis side)

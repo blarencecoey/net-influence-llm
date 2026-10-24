@@ -73,3 +73,49 @@ def test_prompt_shows_only_actions_and_truncates():
         assert word not in prompt.lower()
     with_pay = render_prompt(acts[:5], payoffs=np.ones((5, 4), dtype=int))
     assert "all 5 rounds" in with_pay and "| 1 1 1 1" in with_pay
+
+
+def _scripted_run(tmp_path, cond="C2"):
+    from pathlib import Path
+
+    from netinf.envs import llm_rps as g
+
+    cfg = g.load_config(Path(__file__).resolve().parents[1] / "configs" / "base.yaml")
+    cfg.update(condition=cond, provider="scripted", n_rounds=60, seeds=[0], p_channel=1.0)
+    meta = g.run_one(cfg, 0, None, tmp_path)
+    return tmp_path / meta["run_id"], meta
+
+
+def test_judge_run_writes_judge_json_read_by_analysis(tmp_path):
+    from netinf import analysis as an
+    from netinf.judge import judge_run
+
+    d, _ = _scripted_run(tmp_path)
+    c = make_client("fake", responder=lambda m, s: GOOD)
+    out = judge_run(d, c, model="judge", provider="fake")
+    saved = json.loads((d / "judge.json").read_text())
+    assert saved == out and out["parse_ok"] and out["n_rounds"] == 60
+    assert set(out["scores"]) == {"0-1", "0-2", "0-3", "1-2", "1-3", "2-3"}
+    assert "P0" in out["messages"][1]["content"] and "payoffs" not in out["messages"][1]["content"]
+    run = an.load_run(d)
+    assert run.judge[(1, 3)] == 95
+    recs = an.score_units([run])
+    assert any(r["detector"] == "judge" and "rank" in r for r in recs)
+
+
+def test_judge_run_failure_scores_every_pair(tmp_path):
+    from netinf.judge import judge_run
+
+    d, _ = _scripted_run(tmp_path)
+    out = judge_run(d, make_client("fake", responder=lambda m, s: "no"), model="j", provider="fake")
+    assert not out["parse_ok"] and out["attempts"] == 3
+    assert len(out["scores"]) == 6 and set(out["scores"].values()) == {0.0}
+
+
+def test_partial_judge_file_does_not_crash_analysis(tmp_path):
+    from netinf import analysis as an
+
+    d, _ = _scripted_run(tmp_path)
+    (d / "judge.json").write_text(json.dumps({"scores": {"2-3": 80}}))
+    recs = an.score_units([an.load_run(d)])  # no KeyError: an incomplete judge is skipped
+    assert recs and "judge" not in {r["detector"] for r in recs}

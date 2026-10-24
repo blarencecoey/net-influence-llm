@@ -18,6 +18,10 @@ Choices:
 
 Returns {(i, j): score} over unordered pairs i < j, the same convention as
 `baselines.correlation_scores`, so `baselines.rank_of_pair` applies.
+
+`judge_run` applies the judge to one run directory and writes `judge.json` there (scores keyed
+"i-j", read by `analysis.load_run`), with the model, prompt, raw replies, tokens and cost.
+Bump JUDGE_PROMPT_VERSION whenever the judge prompt wording changes.
 """
 
 from __future__ import annotations
@@ -26,10 +30,14 @@ import json
 import re
 from dataclasses import dataclass, field
 from itertools import combinations
+from pathlib import Path
 
 import numpy as np
 
 from netinf.agents.client import Client, Completion
+from netinf.runlog import git_commit, load_run, now
+
+JUDGE_PROMPT_VERSION = "v1"
 
 MOVE_LETTERS = "RPS"  # 0 = ROCK, 1 = PAPER, 2 = SCISSORS (netinf.envs.rps)
 
@@ -166,3 +174,45 @@ def judge_scores(
                 },
             ]
     return result
+
+
+def judge_run(
+    run_dir: str | Path,
+    client: Client,
+    *,
+    model: str,
+    provider: str,
+    with_payoffs: bool = False,
+    temperature: float = 0.0,
+    max_tokens: int = 400,
+    seed: int | None = 0,
+    max_rounds: int = 200,
+    max_attempts: int = 3,
+) -> dict:
+    """Judge one run's completed rounds and write `judge.json` into the run dir; returns it."""
+    run_dir = Path(run_dir)
+    actions, payoffs, _ = load_run(run_dir)
+    started = now()
+    res = judge_scores(actions, client, model=model, payoffs=payoffs if with_payoffs else None,
+                       temperature=temperature, max_tokens=max_tokens, seed=seed,
+                       max_rounds=max_rounds, max_attempts=max_attempts)
+    costs = [c.cost_usd for c in res.completions]
+    out = {
+        "scores": {f"{i}-{j}": s for (i, j), s in sorted(res.scores.items())},
+        "most_suspicious_pair": list(res.most_suspicious_pair) if res.most_suspicious_pair else None,
+        "parse_ok": res.parse_ok, "attempts": len(res.completions),
+        "provider": provider, "model": model,
+        "models_echoed": sorted({c.model for c in res.completions}),
+        "judge_prompt_version": JUDGE_PROMPT_VERSION, "with_payoffs": with_payoffs,
+        "temperature": temperature, "max_tokens": max_tokens, "seed": seed,
+        "max_rounds": max_rounds, "n_rounds": int(actions.shape[0]),
+        "rounds_shown": int(min(actions.shape[0], max_rounds)),
+        "input_tokens": sum(c.input_tokens for c in res.completions),
+        "output_tokens": sum(c.output_tokens for c in res.completions),
+        "cost_usd": None if any(c is None for c in costs) else sum(costs),
+        "cached": bool(res.completions) and all(c.cached for c in res.completions),
+        "raw_texts": [c.text for c in res.completions], "messages": res.messages,
+        "started_at": started, "finished_at": now(), "git_commit": git_commit(),
+    }
+    (run_dir / "judge.json").write_text(json.dumps(out, indent=2), encoding="utf-8")
+    return out
