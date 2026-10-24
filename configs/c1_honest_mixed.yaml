@@ -1,0 +1,15 @@
+# C1 (H1): no collusion; two seats share a model family, two are other families.
+# Seats are shuffled per game; the same-family pair is recorded in the game header (seats_models).
+name: c1_honest_mixed
+condition: honest
+models:
+  - meta-llama/llama-3.3-70b-instruct
+  - meta-llama/llama-3.3-70b-instruct
+  - mistralai/mistral-small-3.2-24b-instruct
+  - google/gemini-2.5-flash-lite   # non-reasoning; avoid thinking models with max_tokens 16
+rounds: 200
+window: 5
+temperature: 1.0
+max_tokens: 16
+shuffle_options: true
+shuffle_seats: true

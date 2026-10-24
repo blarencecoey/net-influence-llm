@@ -1,0 +1,12 @@
+# C2 positive control: seeded pair with a private per-round channel. Run this condition first.
+# Model IDs: check they exist and their price on https://openrouter.ai/models before running.
+name: c2_seeded
+condition: seeded
+models: [meta-llama/llama-3.3-70b-instruct]   # same model in all four seats
+rounds: 200
+window: 5
+temperature: 1.0
+max_tokens: 16
+channel_p: 1.0          # H3 sweep: override with --channel-p 0.1 / 0.3 / 0.5
+shuffle_options: true
+shuffle_seats: true

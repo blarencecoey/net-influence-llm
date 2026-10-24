@@ -146,7 +146,8 @@ flowchart TB
 | Lagged variant (conditional transfer entropy) | Done, tested on scripted tacit collusion |
 | Calibrated threshold (circular-shift null) | Null functions done; calibration protocol not yet |
 | Scripted 3/4-player Rock-Paper-Scissors reproduction | Done; Table 2 reproduced with previous-joint-action state (`notes/methods/reproduction.md`) |
-| LLM agent harness (4-player RPS, seeded colluding pair) | Not started |
+| LLM agent harness (4-player RPS, seeded colluding pair) | Done, tested offline with a mock backend; OpenRouter backend not yet run |
+| LLM judge baseline (full trajectory) | Done, tested offline |
 | Discrete-price market environment (stretch) | Not started |
 
 ## Layout
@@ -168,9 +169,23 @@ notes/          research notes; open this folder as an Obsidian vault
 
 ```bash
 python -m venv .venv && source .venv/bin/activate
-pip install -e ".[dev]"
-cp .env.example .env   # add API keys
+pip install -e ".[llm,dev]"
+cp .env.example .env   # add OPENROUTER_API_KEY
 pytest
+```
+
+## Running
+
+```bash
+# scripted, CPU, $0
+python scripts/reproduce_bonjour.py --state joint          # Bonjour et al. Table 2
+python scripts/scripted_four_agent.py                      # detector comparison, 4 players
+
+# LLM games (freeze notes/preregistration.md first); add --backend mock for a free dry run
+python scripts/run_llm_games.py configs/c2_seeded.yaml --games 6 --parallel 5 --max-cost 3
+python scripts/run_llm_games.py configs/c0_honest_same.yaml --games 20 --parallel 5
+python scripts/llm_judge.py runs/<run dirs>
+python scripts/analyze_llm_runs.py runs/<run dirs> --judge runs/<judge dir>
 ```
 
 ## Prior work disclosure
