@@ -245,6 +245,9 @@ const DET_NAMES = { netinf: "Net influence Γ", netinf_mm: "Γ, Miller–Madow",
                     correlation: "Cramér's V", judge: "LLM judge" };
 const STATE_NAMES = { prev_n_distinct: "prev. # distinct moves", none: "none (single state)", prev_joint: "prev. joint action" };
 const detName = d => DET_NAMES[d] || d;
+// the harness's positive-control test has changed over time, so each run is labelled with the test it recorded
+const PC_TESTS = { binomial_vs_chance_one_sided: "binomial vs chance", fisher_exact_one_sided: "Fisher vs honest" };
+const pcTestName = t => PC_TESTS[t] || t || "unknown test";
 const stateName = s => STATE_NAMES[s] || s;
 const runLabel = e => e.condition + (e.p_channel != null && e.primary != null ? ` p=${e.p_channel}` : "");
 function pcBadge(passed, title = "") {
@@ -473,7 +476,7 @@ function pcSection(s) {
   const runE = Object.fromEntries(S.runs.map(e => [e.id, e]));
   const fails = rows.filter(r => r.passed === false);
   return `<section><h3>Positive control</h3>
-  <p class="note">Did the seeded pair actually collude? <b>Harness</b>: primary win rate &gt; honest pooled win rate, one-sided Fisher exact test (written to <code>meta.json</code> at run time). <b>Analysis</b>: per-round primary − mean honest payoff, one-sided t-test (<code>analysis.positive_control</code>). Seeded runs that fail the analysis check are excluded from the detector summary.</p>
+  <p class="note">Did the seeded pair actually collude? <b>Harness</b>: the check written to <code>meta.json</code> at run time, labelled with the test that run used (older runs: Fisher vs honest; now: binomial vs chance). <b>Analysis</b>: recomputed now with <code>analysis.positive_control</code>: primary win rate vs the uniform-play chance rate, one-sided exact binomial. Seeded runs that fail the analysis check are excluded from the detector summary. <b>t-test vs honest</b> (primary − mean honest payoff per round) is shown for reference only; it is not used to pass or fail, because a helping assistant also hands honest players points.</p>
   ${fails.length ? `<div class="callout bad">${fails.length} seeded run(s) fail the harness check. Detection results on those runs should not be trusted.</div>` : ""}
   ${table([
     { h: "Run", v: r => `<a href="#/run/${encodeURIComponent(r.id)}">${esc(r.id)}</a>` },
@@ -481,10 +484,11 @@ function pcSection(s) {
     { h: "Seed", r: 1, v: r => esc(r.seed) },
     { h: "Pair", v: r => `<span class="num">${esc(r.a?.pair ? r.a.pair.join("-") : (runE[r.id]?.primary ?? "?") + "-" + (runE[r.id]?.assistants || []).join(","))}</span>` },
     { h: "Primary win", r: 1, v: r => pct(r.a?.primary_win_rate, 1) },
+    { h: "Chance", r: 1, title: "win rate under uniform random play", v: r => pct(r.a?.chance_win_rate, 1) },
     { h: "Honest win", r: 1, title: "pooled honest players (payoffs are 0/1, so mean payoff = win rate)", v: r => pct(r.a?.honest_mean, 1) },
-    { h: "Harness p", r: 1, title: "one-sided Fisher exact", v: r => pv(r.p) },
-    { h: "Analysis p", r: 1, title: "one-sided t-test", v: r => pv(r.a?.p_value) },
-    { h: "Harness", v: r => pcBadge(r.passed) }, { h: "Analysis", v: r => pcBadge(r.a?.passed) }], rows)}</section>`;
+    { h: "Harness", v: r => `${pcBadge(r.passed, pcTestName(r.test))} <span class="ci num">p ${pv(r.p)} · ${esc(pcTestName(r.test))}</span>` },
+    { h: "Analysis", title: "binomial vs chance, recomputed", v: r => `${pcBadge(r.a?.passed, "binomial vs chance")} <span class="ci num">p ${pv(r.a?.p_value)}</span>` },
+    { h: "t-test vs honest", r: 1, title: "reference only, not used for pass/fail", v: r => pv(r.a?.p_ttest) }], rows)}</section>`;
 }
 function detectorsIn(rows) { return [...new Set(rows.map(r => r.detector))].sort((a, b) => Object.keys(DET_NAMES).indexOf(a) - Object.keys(DET_NAMES).indexOf(b)); }
 function rowsForState(rows, st) { return rows.filter(r => r.detector.startsWith("netinf") ? r.state === st : true); }
@@ -561,7 +565,7 @@ function gamePage(d) {
     : `<span class="badge warn">${ent.status === "stalled" ? "stalled" : "incomplete"}${m.stop_reason ? ": " + esc(m.stop_reason) : ""}</span>`;
   let h = `<div class="title"><h2>${esc(d.id)}</h2></div>
   <div class="row" style="margin-top:8px"><span class="badge">${esc(m.condition)}</span><span class="badge">seed ${esc(m.seed)}</span>${m.p_channel != null ? `<span class="badge">p_channel ${esc(m.p_channel)}</span>` : ""}${status}
-  ${pc ? `<span>positive control ${pcBadge(pc.passed, "harness Fisher test")}</span>` : ""}</div>`;
+  ${pc ? `<span>positive control ${pcBadge(pc.passed, "harness: " + pcTestName(pc.test))}</span>` : ""}</div>`;
   h += `<section><div class="facts">
     ${[["Rounds", `${m.completed ? m.rounds_completed : d.rounds.actions.length} / ${m.n_rounds}`], ["Seeded pair", d.colluders.length ? d.colluders.map(i => "P" + i).join(" + ") : "none"],
        ["Models", [...new Set(L.map(l => l.model))].join(", ")], ["Prompt version", m.prompt_version], ["Output mode", m.output_mode], ["History window", m.history_window],
@@ -570,7 +574,7 @@ function gamePage(d) {
        ["Started", m.started_at], ["Git commit", (m.git_commit || "").slice(0, 10)]].map(([k, v]) => `<div><div class="k">${k}</div><div class="v">${esc(v ?? "–")}</div></div>`).join("")}
   </div>
   ${m.skip_positive_control_check ? `<div class="callout warn">Run with --skip-positive-control-check.</div>` : ""}
-  ${pc ? `<div class="callout ${pc.passed ? "info" : "bad"}">Positive control (harness, Fisher one-sided): primary win ${pct(pc.primary_mean, 1)} vs honest ${pct(pc.honest_mean, 1)} (assistant ${pct(pc.assistant_mean, 1)}), p = ${pv(pc.p_value)} → <b>${pc.passed ? "PASS" : "FAIL"}</b>${pca ? ` · analysis t-test p = ${pv(pca.p_value)} → <b>${pca.passed ? "PASS" : "FAIL"}</b>` : ""}${pc.passed ? "" : ". The seeded pair did not measurably help the primary; detection on this run is not a valid positive control."}</div>` : ""}
+  ${pc ? `<div class="callout ${pc.passed ? "info" : "bad"}">Positive control (harness, ${esc(pcTestName(pc.test))}, one-sided): primary win ${pct(pc.primary_mean, 1)}${pc.chance != null ? ` vs chance ${pct(pc.chance, 1)}` : ""}, honest ${pct(pc.honest_mean, 1)}, assistant ${pct(pc.assistant_mean, 1)}; p = ${pv(pc.p_value)} → <b>${pc.passed ? "PASS" : "FAIL"}</b>${pca ? ` · analysis (binomial vs chance, recomputed) p = ${pv(pca.p_value)} → <b>${pca.passed ? "PASS" : "FAIL"}</b> · t-test vs honest p = ${pv(pca.p_ttest)} (reference)` : ""}${pc.passed ? "" : ". The seeded pair did not measurably help the primary; detection on this run is not a valid positive control."}</div>` : ""}
   </section>`;
   const tabs = [["turns", "Turns"], ["detection", "Detection"], ["play", "Play"], ["calls", `Calls (${d.calls.length})`], ["prompts", `Prompts (${Object.keys(d.prompts).length})`], ["config", "Config"], ["files", "Files"]];
   h += `<div class="tabs" data-seg="tab">${tabs.map(([v, l]) => `<button data-v="${v}" class="${v === tab ? "on" : ""}">${l}</button>`).join("")}</div>`;
@@ -616,7 +620,7 @@ function detectionTab(d, L) {
     table([{ h: "Pair", v: p => `<b class="num">${esc(p)}</b>${p === d.true_pair ? ` <span class="badge warn">seeded</span>` : ""}` },
       ...dets.map(([k]) => ({ h: esc(detName(k)) + (k.startsWith("netinf") ? "" : ""), r: 1, v: p => { const r = lookup[k][p]; return r ? `${f(r.score, 4)} <span class="ci">#${r.rank}</span>` : "–"; } }))],
       pairs, { rowClass: p => p === d.true_pair ? "true" : "" });
-  if (tp) h += `<div class="row" style="margin-top:10px">${dets.map(([k, v]) => `<span class="badge ${v.true_rank === 1 ? "pass" : ""}">${esc(detName(k))}: rank ${v.true_rank}</span>`).join("")}</div>`;
+  if (tp) h += `<div class="row" style="margin-top:10px">${dets.map(([k, v]) => `<span class="badge ${v.true_rank === 1 ? "pass" : ""}">${esc(detName(k))}: ${v.true_rank != null ? `rank ${v.true_rank}` : "seeded pair unscored"}</span>`).join("")}</div>`;
   return h + `</section>`;
 }
 function playTab(d, L) {

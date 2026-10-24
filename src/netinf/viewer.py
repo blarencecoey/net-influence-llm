@@ -148,6 +148,7 @@ def run_entry(path: Path) -> dict | None:
         e["provider"] = next((a.get("provider") for a in m.get("agents") or []), None)
         e["pc_passed"] = pc.get("passed")
         e["pc_p"] = pc.get("p_value")
+        e["pc_test"] = pc.get("test")  # the harness's test changed over time; label from the run
         e |= run_status(path, m)
         if e["status"] != "done":  # meta.json is only rewritten at the end; count logged rounds
             with open(path / "rounds.jsonl", "rb") as f:
@@ -190,7 +191,7 @@ def game_detectors(actions: np.ndarray, true_pair, states=STATES, judge=None,
 
     def pack(scores, G=None):
         rec = {"ranked": _ranked(scores, true_pair), "matrix": G}
-        if true_pair is not None:
+        if true_pair is not None and true_pair in scores:  # a judge may leave pairs unscored
             rec["true_rank"] = rank_of_pair(scores, true_pair)
         if G is not None:  # Algorithm 1 applies to the same-round net influence matrix only
             found = d.detect_pair(actions, G=G, alpha=alpha)
@@ -404,7 +405,8 @@ def summary(runs_dir: Path, models: str | None = None, states=STATES) -> dict:
            "spend": spend, "skipped": skipped, "states": list(states),
            "primary_state": an.PRIMARY_STATE, "calib_seeds": list(an.DEFAULT_CALIB_SEEDS),
            "harness_pc": [{"id": e["id"], "condition": e["condition"], "seed": e["seed"],
-                           "p_channel": e["p_channel"], "passed": e["pc_passed"], "p": e["pc_p"]}
+                           "p_channel": e["p_channel"], "passed": e["pc_passed"], "p": e["pc_p"],
+                           "test": e.get("pc_test")}
                           for e in games if e.get("pc_passed") is not None],
            "other_results": [e for e in entries if e["kind"] in ("bonjour_repro", "scripted4")]}
     if not runs:
