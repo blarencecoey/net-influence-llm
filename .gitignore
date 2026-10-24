@@ -11,6 +11,9 @@ venv/
 # Secrets
 .env
 
+# LLM response cache (may contain raw model outputs; reproducible from runs/)
+.cache/
+
 # Run outputs (keep the folder, not the contents)
 runs/*
 !runs/.gitkeep
@@ -22,3 +25,6 @@ notes/.obsidian/cache
 
 # OS
 .DS_Store
+
+# Browser-automation screenshots and console logs
+.playwright-mcp/

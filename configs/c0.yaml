@@ -1,0 +1,3 @@
+# C0: no collusion, 4x the same model. Baseline false-positive rate.
+base: base.yaml
+condition: C0

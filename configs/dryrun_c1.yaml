@@ -1,0 +1,4 @@
+# Dry run of c1.yaml with scripted agents ($0, no API, seconds).
+base: c1.yaml
+provider: scripted
+seeds: [0, 1, 2]

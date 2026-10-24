@@ -1,0 +1,922 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Net Influence Results</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='1' y='1' width='6' height='6' rx='1' fill='%232f5fd0'/%3E%3Crect x='9' y='1' width='6' height='6' rx='1' fill='%23e0742a' opacity='.5'/%3E%3Crect x='1' y='9' width='6' height='6' rx='1' fill='%23e0742a' opacity='.5'/%3E%3Crect x='9' y='9' width='6' height='6' rx='1' fill='%232f5fd0'/%3E%3C/svg%3E">
+<style>
+:root {
+  --bg: #f6f5f2; --panel: #ffffff; --panel-2: #f0eee9; --ink: #1d1f23; --muted: #6b6f78;
+  --line: #e2dfd8; --accent: #2f5fd0; --good: #1f8a5b; --good-bg: #e3f3ea; --bad: #c0392b;
+  --bad-bg: #fbe7e4; --warn: #9a6a00; --warn-bg: #fbf1d6; --true: #fff3c4; --true-line: #d9a400;
+  --p0: #2f6fdf; --p1: #e0742a; --p2: #2a9d6f; --p3: #b4479f; --p4: #8a6d1f; --p5: #5b5fc7;
+  --rock: #8a7a68; --paper: #3f8fc6; --scissors: #d1495b; --pos: 224,116,42; --neg: 47,111,223;
+  --mono: ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141518; --panel: #1c1e22; --panel-2: #24272c; --ink: #e8e6e1; --muted: #9a9ea6;
+    --line: #2f3238; --accent: #7aa2ff; --good: #4cc38a; --good-bg: #173326; --bad: #ff7a6b;
+    --bad-bg: #3a1d1a; --warn: #e6b450; --warn-bg: #3a3018; --true: #3a3315; --true-line: #e6b450;
+    --p0: #6f9cff; --p1: #f59a5c; --p2: #4fc79a; --p3: #d878c4; --p4: #c9a64a; --p5: #9a9dff;
+    --rock: #b3a28e; --paper: #6db3e6; --scissors: #ef6f80;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #141518; --panel: #1c1e22; --panel-2: #24272c; --ink: #e8e6e1; --muted: #9a9ea6;
+  --line: #2f3238; --accent: #7aa2ff; --good: #4cc38a; --good-bg: #173326; --bad: #ff7a6b;
+  --bad-bg: #3a1d1a; --warn: #e6b450; --warn-bg: #3a3018; --true: #3a3315; --true-line: #e6b450;
+  --p0: #6f9cff; --p1: #f59a5c; --p2: #4fc79a; --p3: #d878c4; --p4: #c9a64a; --p5: #9a9dff;
+  --rock: #b3a28e; --paper: #6db3e6; --scissors: #ef6f80;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body { background: var(--bg); color: var(--ink); font: 14px/1.45 var(--sans); }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+code, pre, .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.num { font-size: 12.5px; }
+pre { background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px;
+      overflow: auto; font-size: 12px; line-height: 1.5; white-space: pre-wrap; word-break: break-word;
+      max-height: 520px; margin: 0; }
+
+.app { display: grid; grid-template-columns: 290px 1fr; height: 100vh; }
+aside { border-right: 1px solid var(--line); background: var(--panel); display: flex; flex-direction: column;
+        min-height: 0; }
+.brand { padding: 14px 16px 10px; border-bottom: 1px solid var(--line); }
+.brand h1 { font-size: 15px; margin: 0; letter-spacing: .01em; }
+.brand .sub { color: var(--muted); font-size: 12px; margin-top: 2px; word-break: break-all; }
+.brand .tools { display: flex; gap: 6px; margin-top: 10px; }
+.search { width: 100%; padding: 6px 9px; border: 1px solid var(--line); border-radius: 6px;
+          background: var(--bg); color: var(--ink); font: inherit; font-size: 13px; }
+.nav { overflow-y: auto; padding: 6px 0 20px; flex: 1; }
+.nav h3 { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted);
+          margin: 14px 16px 4px; font-weight: 600; }
+.nav a { display: flex; align-items: center; gap: 8px; padding: 4px 16px; color: var(--ink); font-size: 13px; }
+.nav a:hover { background: var(--panel-2); text-decoration: none; }
+.nav a.on { background: var(--panel-2); box-shadow: inset 3px 0 0 var(--accent); }
+.nav a .meta { margin-left: auto; color: var(--muted); font-size: 11.5px; font-family: var(--mono); }
+.nav .grp { font-size: 12px; color: var(--muted); padding: 6px 16px 2px; font-weight: 600; }
+.dot { width: 8px; height: 8px; border-radius: 50%; flex: none; background: var(--line); }
+.dot.pass { background: var(--good); } .dot.fail { background: var(--bad); } .dot.inc { background: var(--warn); }
+
+main { overflow-y: auto; min-width: 0; }
+.wrap { max-width: 1180px; margin: 0 auto; padding: 22px 28px 60px; }
+.title { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.title h2 { margin: 0; font-size: 20px; word-break: break-all; }
+.lede { color: var(--muted); margin: 6px 0 18px; max-width: 80ch; }
+section { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px;
+          margin: 14px 0; }
+section > h3 { margin: 0 0 4px; font-size: 15px; }
+section > .note { color: var(--muted); font-size: 12.5px; margin: 0 0 12px; max-width: 95ch; }
+.grid { display: grid; gap: 14px; }
+.g2 { grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; }
+.kpi { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+.kpi .k { color: var(--muted); font-size: 12px; }
+.kpi .v { font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; margin-top: 2px; }
+.kpi .s { color: var(--muted); font-size: 12px; }
+.facts { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px 18px; }
+.facts div { min-width: 0; } .facts .k { color: var(--muted); font-size: 12px; }
+.facts .v { font-family: var(--mono); font-size: 12.5px; word-break: break-all; }
+
+.badge { display: inline-block; padding: 1px 8px; border-radius: 99px; font-size: 12px; font-weight: 600;
+         background: var(--panel-2); color: var(--muted); border: 1px solid var(--line); white-space: nowrap; }
+.badge.pass { background: var(--good-bg); color: var(--good); border-color: transparent; }
+.badge.fail { background: var(--bad-bg); color: var(--bad); border-color: transparent; }
+.badge.warn { background: var(--warn-bg); color: var(--warn); border-color: transparent; }
+.callout { border-radius: 8px; padding: 9px 12px; font-size: 13px; margin: 10px 0; }
+.callout.warn { background: var(--warn-bg); color: var(--warn); }
+.callout.bad { background: var(--bad-bg); color: var(--bad); }
+.callout.info { background: var(--panel-2); color: var(--muted); }
+
+.tablewrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th, td { text-align: left; padding: 5px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-weight: 600; color: var(--muted); font-size: 12px; white-space: nowrap; background: var(--panel); }
+td.r, th.r { text-align: right; }
+tr.true td { background: var(--true); }
+tr.true td:first-child { box-shadow: inset 3px 0 0 var(--true-line); }
+tbody tr:hover td { background: var(--panel-2); }
+tr.true:hover td { background: var(--true); }
+td .ci { color: var(--muted); font-size: 11.5px; }
+
+.tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--line); margin: 18px 0 0; flex-wrap: wrap; }
+.tabs button { background: none; border: 0; padding: 8px 14px; font: inherit; color: var(--muted); cursor: pointer;
+               border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.tabs button.on { color: var(--ink); border-bottom-color: var(--accent); font-weight: 600; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; flex-wrap: wrap; }
+.seg button { background: var(--panel); border: 0; border-right: 1px solid var(--line); padding: 4px 11px;
+              font: inherit; font-size: 12.5px; color: var(--muted); cursor: pointer; }
+.seg button:last-child { border-right: 0; }
+.seg button.on { background: var(--panel-2); color: var(--ink); font-weight: 600; }
+.btn { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 4px 10px;
+       font: inherit; font-size: 12.5px; color: var(--ink); cursor: pointer; }
+.btn:hover { background: var(--panel-2); }
+.row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 0 0 10px; }
+.row label { color: var(--muted); font-size: 12.5px; }
+select, input[type=text] { background: var(--panel); color: var(--ink); border: 1px solid var(--line);
+         border-radius: 6px; padding: 4px 8px; font: inherit; font-size: 12.5px; }
+
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--muted); margin: 0 0 6px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 14px; height: 3px; border-radius: 2px; display: inline-block; }
+.legend i.sq { width: 10px; height: 10px; border-radius: 2px; }
+.legend i.dash { background: none !important; border-top: 2px dashed currentColor; height: 0; }
+svg.chart { width: 100%; height: auto; display: block; overflow: visible; }
+svg text { fill: var(--muted); font: 11px var(--sans); }
+svg .axis { stroke: var(--line); }
+svg .grid line { stroke: var(--line); stroke-dasharray: 2 3; }
+.strip { overflow-x: auto; padding-bottom: 4px; }
+.empty { color: var(--muted); padding: 30px 0; text-align: center; }
+.foot { color: var(--muted); font-size: 12px; margin-top: 26px; }
+.loading { color: var(--muted); padding: 40px 0; }
+.prompt h4 { margin: 12px 0 6px; font-size: 13px; }
+.raw { font-family: var(--mono); font-size: 12px; white-space: pre-wrap; word-break: break-word; max-width: 520px; }
+img.result { max-width: 100%; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
+
+/* turn-by-turn view */
+.dot.live { background: var(--bad); animation: pulse 1.4s ease-in-out infinite; }
+.dot.stalled { background: var(--warn); }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
+@media (prefers-reduced-motion: reduce) { .dot.live { animation: none; } }
+.ctrl { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.ctrl input[type=range] { flex: 1; min-width: 160px; accent-color: var(--accent); }
+.ctrl .rn { font-family: var(--mono); font-size: 13px; min-width: 92px; text-align: right; }
+.status { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 600; }
+.score { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.score .p { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; border-top: 3px solid var(--pc); }
+.score .p .v { font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.score .p .k { color: var(--muted); font-size: 12px; }
+.bar { height: 5px; background: var(--panel-2); border-radius: 3px; overflow: hidden; margin-top: 4px; }
+.bar i { display: block; height: 100%; background: var(--pc); }
+.chan { border-left: 3px solid var(--muted); background: var(--panel-2); padding: 8px 12px; border-radius: 0 8px 8px 0;
+        font-size: 13px; margin: 0 0 12px; }
+.chan.on { border-left-color: var(--accent); }
+.agents { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.agent { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column;
+         gap: 8px; border-top: 3px solid var(--pc); min-width: 0; }
+.agent.won { box-shadow: 0 0 0 1px var(--good) inset; }
+.agent .hd { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+.agent .hd b { font-size: 14px; }
+.agent .hd .ci { margin-left: auto; }
+.move { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.chip { display: inline-block; padding: 3px 10px; border-radius: 6px; font-weight: 700; font-size: 13px; letter-spacing: .03em;
+        color: #fff; background: var(--mv); }
+.chip.sm { padding: 1px 6px; font-size: 11px; font-weight: 600; }
+.pay { font-family: var(--mono); font-weight: 700; font-size: 15px; }
+.pay.w { color: var(--good); } .pay.l { color: var(--muted); }
+.agent .raw { max-width: none; background: var(--panel-2); border-radius: 6px; padding: 6px 8px; max-height: 180px; overflow: auto; }
+.agent .ft { color: var(--muted); font-size: 11.5px; font-family: var(--mono); }
+.agent details summary { cursor: pointer; color: var(--muted); font-size: 12px; }
+.waiting { color: var(--muted); font-size: 13px; padding: 10px 0 0; display: flex; gap: 8px; align-items: center; }
+.recent td { padding: 4px 8px; }
+.recent tr { cursor: pointer; }
+.recent tr.cur td { background: var(--panel-2); }
+kbd { font-family: var(--mono); font-size: 11px; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 4px; }
+
+@media (max-width: 860px) {
+  .app { grid-template-columns: 1fr; height: auto; }
+  aside { border-right: 0; border-bottom: 1px solid var(--line); max-height: 45vh; }
+  .wrap { padding: 16px 16px 40px; }
+  .g2 { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside>
+    <div class="brand">
+      <h1>Net influence · results</h1>
+      <div class="sub" id="runsdir">loading…</div>
+      <div class="tools">
+        <input class="search" id="q" type="text" placeholder="Filter runs (id, condition, model)">
+        <button class="btn" id="refresh" title="Reload from disk">↻</button>
+      </div>
+    </div>
+    <nav class="nav" id="nav"></nav>
+  </aside>
+  <main><div class="wrap" id="view"><div class="loading">Loading…</div></div></main>
+</div>
+
+<script>
+"use strict";
+// ------------------------------------------------------------------ state and fetching
+const S = { runs: [], summary: null, details: {}, q: "",
+            ui: { models: null, state: null, tab: "detection", matrix: "netinf", base: "nats",
+                  callsPlayer: "all", callsFail: false, callsQ: "", callsPage: 0 } };
+try { const saved = JSON.parse(localStorage.getItem("netinf-viewer-ui") || "{}");
+      Object.assign(S.ui, saved, { callsPage: 0 }); } catch (e) {}
+function saveUI() { try { localStorage.setItem("netinf-viewer-ui", JSON.stringify(S.ui)); } catch (e) {} }
+
+async function getJSON(url) {
+  const r = await fetch(url, { cache: "no-store" });
+  const body = await r.json().catch(() => ({ error: `HTTP ${r.status}` }));
+  if (!r.ok || (body && body.error && !Array.isArray(body) && Object.keys(body).length === 1))
+    throw new Error(body.error || `HTTP ${r.status}`);
+  return body;
+}
+async function loadAll() {
+  S.details = {};
+  const q = S.ui.models ? `?models=${encodeURIComponent(S.ui.models)}` : "";
+  [S.runs, S.summary] = await Promise.all([getJSON("/api/runs"), getJSON("/api/summary" + q)]);
+  if (S.ui.models && S.ui.models !== "*" && !(S.ui.models in S.summary.model_sets)) {  // saved set no longer exists
+    S.ui.models = null; saveUI(); S.summary = await getJSON("/api/summary");
+  }
+  document.getElementById("runsdir").textContent = S.summary.runs_dir;
+  if (!S.ui.state || !S.summary.states.includes(S.ui.state)) S.ui.state = S.summary.primary_state;
+}
+
+// ------------------------------------------------------------------ formatting
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const isNum = x => typeof x === "number" && isFinite(x);
+const f = (x, d = 3) => isNum(x) ? x.toFixed(d) : "–";
+const pct = (x, d = 0) => isNum(x) ? (100 * x).toFixed(d) + "%" : "–";
+const pv = x => !isNum(x) ? "–" : x === 0 ? "0" : x < 1e-3 ? x.toExponential(1) : x.toFixed(3);
+const usd = x => isNum(x) ? "$" + (x < 1 ? x.toFixed(4) : x.toFixed(2)) : "–";
+const int = x => isNum(x) ? x.toLocaleString() : "–";
+const MOVES = ["Rock", "Paper", "Scissors"];
+const MOVE_VAR = ["--rock", "--paper", "--scissors"];
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const pcol = i => `var(--p${i % 6})`;
+const DET_NAMES = { netinf: "Net influence Γ", netinf_mm: "Γ, Miller–Madow", lagged_netinf: "Lagged net influence",
+                    correlation: "Cramér's V", judge: "LLM judge" };
+const STATE_NAMES = { prev_n_distinct: "prev. # distinct moves", none: "none (single state)", prev_joint: "prev. joint action" };
+const detName = d => DET_NAMES[d] || d;
+const stateName = s => STATE_NAMES[s] || s;
+const runLabel = e => e.condition + (e.p_channel != null && e.primary != null ? ` p=${e.p_channel}` : "");
+function pcBadge(passed, title = "") {
+  if (passed == null) return `<span class="badge" title="${esc(title)}">n/a</span>`;
+  return `<span class="badge ${passed ? "pass" : "fail"}" title="${esc(title)}">${passed ? "PASS" : "FAIL"}</span>`;
+}
+function table(cols, rows, opts = {}) {
+  if (!rows.length) return `<div class="empty">${esc(opts.empty || "Nothing to show.")}</div>`;
+  const th = cols.map(c => `<th class="${c.r ? "r" : ""}" title="${esc(c.title || "")}">${c.h}</th>`).join("");
+  const tr = rows.map(row => `<tr class="${opts.rowClass ? opts.rowClass(row) : ""}">` +
+    cols.map(c => `<td class="${c.r ? "r num" : ""}">${c.v(row)}</td>`).join("") + "</tr>").join("");
+  return `<div class="tablewrap"><table><thead><tr>${th}</tr></thead><tbody>${tr}</tbody></table></div>`;
+}
+const seg = (name, opts, cur) => `<div class="seg" data-seg="${name}">` +
+  opts.map(([v, l]) => `<button data-v="${esc(v)}" class="${v === cur ? "on" : ""}">${esc(l)}</button>`).join("") + "</div>";
+
+// ------------------------------------------------------------------ charts (inline SVG)
+function niceTicks(min, max, count = 5) {
+  if (min === max) { min -= 1; max += 1; }
+  const step0 = (max - min) / count, mag = 10 ** Math.floor(Math.log10(step0)), e = step0 / mag;
+  const step = mag * (e >= 7.5 ? 10 : e >= 3.5 ? 5 : e >= 1.5 ? 2 : 1);
+  const out = [];
+  for (let v = Math.ceil(min / step) * step; v <= max + step * 1e-9; v += step) out.push(+v.toFixed(10));
+  return out;
+}
+const tickFmt = v => Math.abs(v) >= 1000 ? (v / 1000).toFixed(v % 1000 ? 1 : 0) + "k" : +v.toFixed(4) + "";
+
+function lineChart({ series, xLabel = "", yLabel = "", yMin, yMax, xMin, xMax, height = 260, hlines = [], yFmt = tickFmt, dots }) {
+  const W = 680, H = height, m = { l: 52, r: 14, t: 10, b: 38 };
+  const pts = series.flatMap(s => s.points.filter(p => isNum(p[1])));
+  if (!pts.length) return `<div class="empty">No data.</div>`;
+  const x0 = xMin ?? Math.min(...pts.map(p => p[0])), x1 = xMax ?? Math.max(...pts.map(p => p[0]));
+  let y0 = yMin ?? Math.min(0, ...pts.map(p => p[1])), y1 = yMax ?? Math.max(...pts.map(p => p[1]), ...hlines.map(h => h.y));
+  if (y0 === y1) y1 = y0 + 1;
+  const X = v => m.l + (v - x0) / ((x1 - x0) || 1) * (W - m.l - m.r);
+  const Y = v => H - m.b - (v - y0) / (y1 - y0) * (H - m.t - m.b);
+  const yt = niceTicks(y0, y1, 5).filter(v => v >= y0 - 1e-9 && v <= y1 + 1e-9), xt = niceTicks(x0, x1, 6).filter(v => v >= x0 && v <= x1);
+  let g = `<g class="grid">${yt.map(v => `<line x1="${m.l}" x2="${W - m.r}" y1="${Y(v)}" y2="${Y(v)}"/>`).join("")}</g>`;
+  g += yt.map(v => `<text x="${m.l - 6}" y="${Y(v) + 3.5}" text-anchor="end">${yFmt(v)}</text>`).join("");
+  g += xt.map(v => `<text x="${X(v)}" y="${H - m.b + 15}" text-anchor="middle">${tickFmt(v)}</text>`).join("");
+  g += `<line class="axis" x1="${m.l}" x2="${W - m.r}" y1="${H - m.b}" y2="${H - m.b}"/>`;
+  g += `<text x="${(m.l + W - m.r) / 2}" y="${H - 4}" text-anchor="middle">${esc(xLabel)}</text>`;
+  g += `<text transform="translate(12 ${(m.t + H - m.b) / 2}) rotate(-90)" text-anchor="middle">${esc(yLabel)}</text>`;
+  for (const h of hlines) g += `<line x1="${m.l}" x2="${W - m.r}" y1="${Y(h.y)}" y2="${Y(h.y)}" stroke="var(--muted)" stroke-dasharray="4 4" stroke-width="1"/>` +
+    `<text x="${W - m.r}" y="${Y(h.y) - 4}" text-anchor="end">${esc(h.label)}</text>`;
+  for (const s of series) {
+    const p = s.points.filter(q => isNum(q[1]));
+    if (!p.length) continue;
+    g += `<polyline fill="none" stroke="${s.color}" stroke-width="${s.width || 2}" stroke-linejoin="round" ${s.dash ? `stroke-dasharray="${s.dash}"` : ""} points="${p.map(q => `${X(q[0]).toFixed(1)},${Y(q[1]).toFixed(1)}`).join(" ")}"/>`;
+    if (dots ?? p.length <= 40) g += p.map(q => `<circle cx="${X(q[0])}" cy="${Y(q[1])}" r="3" fill="${s.dash ? "var(--panel)" : s.color}" stroke="${s.color}" stroke-width="1.5"><title>${esc(s.name)} · ${q[0]}: ${yFmt(q[1])}</title></circle>`).join("");
+  }
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img">${g}</svg>`;
+}
+function legend(items) {
+  return `<div class="legend">${items.map(it => `<span><i class="${it.sq ? "sq" : ""} ${it.dash ? "dash" : ""}" style="background:${it.color};color:${it.color}"></i>${esc(it.name)}</span>`).join("")}</div>`;
+}
+function barChart({ groups, series, yMax = 1, yLabel = "", hlines = [], height = 270, yFmt = v => pct(v) }) {
+  const W = 680, H = height, m = { l: 48, r: hlines.length ? 58 : 10, t: 12, b: 46 };
+  const gw = (W - m.l - m.r) / Math.max(groups.length, 1), bw = Math.min(26, gw * 0.8 / Math.max(series.length, 1));
+  const Y = v => H - m.b - v / yMax * (H - m.t - m.b);
+  let g = `<g class="grid">${niceTicks(0, yMax, 4).map(v => `<line x1="${m.l}" x2="${W - m.r}" y1="${Y(v)}" y2="${Y(v)}"/>`).join("")}</g>`;
+  g += niceTicks(0, yMax, 4).map(v => `<text x="${m.l - 6}" y="${Y(v) + 3.5}" text-anchor="end">${yFmt(v)}</text>`).join("");
+  g += `<text transform="translate(12 ${(m.t + H - m.b) / 2}) rotate(-90)" text-anchor="middle">${esc(yLabel)}</text>`;
+  groups.forEach((grp, gi) => {
+    const cx = m.l + gw * (gi + 0.5), start = cx - bw * series.length / 2;
+    g += `<text x="${cx}" y="${H - m.b + 15}" text-anchor="middle">${esc(grp)}</text>`;
+    series.forEach((s, si) => {
+      const d = s.values[gi];
+      if (!d || !isNum(d.v)) return;
+      const x = start + si * bw;
+      g += `<rect x="${x + 1}" y="${Y(d.v)}" width="${bw - 2}" height="${Math.max(0, Y(0) - Y(d.v))}" fill="${s.color}" rx="2"><title>${esc(s.name)} · ${esc(grp)}: ${yFmt(d.v)}${isNum(d.lo) ? ` [${yFmt(d.lo)}, ${yFmt(d.hi)}]` : ""}${d.n ? ` (n=${d.n})` : ""}</title></rect>`;
+      if (isNum(d.lo) && isNum(d.hi)) {
+        const xm = x + bw / 2;
+        g += `<path d="M${xm} ${Y(d.lo)}V${Y(d.hi)}M${xm - 3} ${Y(d.lo)}h6M${xm - 3} ${Y(d.hi)}h6" stroke="var(--ink)" stroke-width="1" opacity=".55"/>`;
+      }
+    });
+  });
+  g += `<line class="axis" x1="${m.l}" x2="${W - m.r}" y1="${Y(0)}" y2="${Y(0)}"/>`;
+  for (const h of hlines) g += `<line x1="${m.l}" x2="${W - m.r}" y1="${Y(h.y)}" y2="${Y(h.y)}" stroke="var(--muted)" stroke-dasharray="4 4"/><text x="${W - m.r + 5}" y="${Y(h.y) + 3.5}">${esc(h.label)}</text>`;
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img">${g}</svg>`;
+}
+function heatmap(M, labels, { highlight = [], title = "" } = {}) {
+  const n = M.length, c = 64, lw = 112, th = 26, W = lw + n * c + 4, H = th + n * c + 4;
+  const vals = M.flat().filter(isNum), mx = Math.max(1e-9, ...vals.map(Math.abs));
+  const pos = css("--pos") || "224,116,42", neg = css("--neg") || "47,111,223";
+  const hl = new Set(highlight.map(([i, j]) => `${i},${j}`));
+  let g = "";
+  for (let j = 0; j < n; j++) g += `<text x="${lw + j * c + c / 2}" y="${th - 9}" text-anchor="middle">${esc(labels[j].short)}</text>`;
+  for (let i = 0; i < n; i++) {
+    g += `<text x="${lw - 8}" y="${th + i * c + c / 2 + 4}" text-anchor="end">${esc(labels[i].long)}</text>`;
+    for (let j = 0; j < n; j++) {
+      const v = M[i][j], x = lw + j * c, y = th + i * c;
+      const fill = !isNum(v) ? "var(--panel-2)" : `rgba(${v >= 0 ? pos : neg},${(0.08 + 0.82 * Math.abs(v) / mx).toFixed(3)})`;
+      g += `<rect x="${x + 1}" y="${y + 1}" width="${c - 2}" height="${c - 2}" rx="4" fill="${fill}" ${hl.has(`${i},${j}`) ? `stroke="var(--true-line)" stroke-width="2.5"` : ""}><title>${esc(title)} [${i}, ${j}] = ${isNum(v) ? v.toFixed(5) : "–"}</title></rect>`;
+      g += `<text x="${x + c / 2}" y="${y + c / 2 + 4}" text-anchor="middle" style="fill:var(--ink);font-family:var(--mono);font-size:11px">${isNum(v) ? v.toFixed(3) : "·"}</text>`;
+    }
+  }
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" style="max-width:${W}px" role="img">${g}</svg>`;
+}
+function actionStrip(actions, payoffs, channel, labels) {
+  const T = actions.length, n = T ? actions[0].length : 0;
+  if (!T) return `<div class="empty">No rounds.</div>`;
+  const cw = T > 400 ? 3 : T > 200 ? 4 : 6, rh = 16, lw = 112, top = channel.some(x => x != null) ? 14 : 4;
+  const W = lw + T * cw + 4, H = top + n * (rh + 3) + 22;
+  let g = "";
+  if (top > 4) {
+    g += `<text x="${lw - 8}" y="10" text-anchor="end">channel</text>`;
+    channel.forEach((c, t) => { if (c) g += `<rect x="${lw + t * cw}" y="3" width="${Math.max(1, cw - 1)}" height="7" fill="var(--muted)"/>`; });
+  }
+  for (let i = 0; i < n; i++) {
+    const y = top + i * (rh + 3);
+    g += `<text x="${lw - 8}" y="${y + rh - 4}" text-anchor="end">${esc(labels[i].long)}</text>`;
+    for (let t = 0; t < T; t++) {
+      const a = actions[t][i], won = payoffs[t][i] > 0;
+      g += `<rect x="${lw + t * cw}" y="${y}" width="${Math.max(1, cw - (cw > 3 ? 1 : 0))}" height="${rh}" fill="var(${MOVE_VAR[a]})" opacity="${won ? 1 : 0.28}"><title>round ${t} · P${i} ${MOVES[a]} · payoff ${payoffs[t][i]}</title></rect>`;
+    }
+  }
+  const yb = top + n * (rh + 3) + 14;
+  for (const t of niceTicks(0, T - 1, 10).filter(v => v < T)) g += `<text x="${lw + t * cw}" y="${yb}">${t}</text>`;
+  return `<div class="strip"><svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">${g}</svg></div>`;
+}
+
+// ------------------------------------------------------------------ navigation
+function route() {
+  const h = decodeURIComponent(location.hash.replace(/^#\/?/, ""));
+  if (h.startsWith("run/")) return { page: "run", id: h.slice(4) };
+  return { page: "overview" };
+}
+function renderNav() {
+  const r = route(), q = S.q.toLowerCase();
+  const match = e => !q || [e.id, e.condition, ...(e.models || [])].join(" ").toLowerCase().includes(q);
+  const games = S.runs.filter(e => e.kind === "game" && match(e));
+  const others = S.runs.filter(e => e.kind !== "game" && match(e));
+  const groups = {};
+  for (const e of games) (groups[runLabel(e)] ||= []).push(e);
+  const keys = Object.keys(groups).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  const link = (e, text, meta) => {
+    const dot = e.kind !== "game" ? "" : e.status === "live" ? "live" : e.status === "stalled" ? "stalled" : e.completed === false ? "inc" : e.pc_passed === true ? "pass" : e.pc_passed === false ? "fail" : "";
+    return `<a href="#/run/${encodeURIComponent(e.id)}" class="${r.id === e.id ? "on" : ""}" title="${esc(e.id)}"><span class="dot ${dot}"></span>${text}<span class="meta">${meta}</span></a>`;
+  };
+  let h = `<a href="#/" class="${r.page === "overview" ? "on" : ""}"><b>Overview</b></a>`;
+  const live = games.filter(e => e.status === "live");
+  if (live.length) {
+    h += `<h3 style="color:var(--bad)">Live now (${live.length})</h3>`;
+    for (const e of live) h += link(e, `${esc(runLabel(e))} · seed ${esc(e.seed)}`, `${e.rounds_completed ?? 0}/${e.n_rounds ?? "?"}`);
+  }
+  h += `<h3>Game runs (${games.length})</h3>`;
+  if (!games.length) h += `<div class="grp">none</div>`;
+  for (const k of keys) {
+    h += `<div class="grp">${esc(k)}</div>`;
+    for (const e of groups[k].sort((a, b) => (a.seed ?? 0) - (b.seed ?? 0) || a.id.localeCompare(b.id)))
+      h += link(e, `seed ${esc(e.seed)} · ${esc(e.models.join(", "))}`, e.status === "done" ? `${e.rounds_completed ?? "?"}r` : `${e.rounds_completed ?? 0}/${e.n_rounds ?? "?"}`);
+  }
+  if (others.length) {
+    h += `<h3>Scripted studies (${others.length})</h3>`;
+    for (const e of others) h += link(e, esc(e.kind === "bonjour_repro" ? "Table 2 reproduction" : e.kind === "scripted4" ? "Scripted 4-player" : e.id),
+      esc(e.kind === "other" ? "" : (e.config?.iters ? `${e.config.iters} it` : e.config?.games ? `${e.config.games} g` : "")));
+  }
+  document.getElementById("nav").innerHTML = h;
+}
+async function render() {
+  renderNav();
+  const view = document.getElementById("view"), r = route();
+  try {
+    if (r.page === "run") {
+      const ent = S.runs.find(e => e.id === r.id);
+      if (r.id !== S.lastRun && ent?.status === "live") S.ui.tab = "turns";  // opening a live run: watch it
+      S.lastRun = r.id;
+      if (S.details[r.id]?._stale && S.ui.tab !== "turns") delete S.details[r.id];
+      if (!S.details[r.id]) { view.innerHTML = `<div class="loading">Loading ${esc(r.id)}…</div>`; S.details[r.id] = await getJSON(`/api/run/${encodeURIComponent(r.id)}`); }
+      const d = S.details[r.id];
+      view.innerHTML = d.kind === "game" ? gamePage(d) : d.kind === "bonjour_repro" ? bonjourPage(d) : d.kind === "scripted4" ? scripted4Page(d) : otherPage(d);
+      if (d.kind === "game" && S.ui.tab === "turns") startTurns(d.id); else stopTurns();
+    } else { stopTurns(); view.innerHTML = overviewPage(); }
+    view.querySelectorAll("[data-seg]").forEach(el => el.addEventListener("click", async ev => {
+      const b = ev.target.closest("button"); if (!b) return;
+      const key = el.dataset.seg; S.ui[key] = b.dataset.v; if (key !== "callsPage") S.ui.callsPage = 0; saveUI();
+      if (key === "models") await loadAll();
+      render();
+    }));
+    bindCalls(view);
+  } catch (e) {
+    view.innerHTML = `<div class="callout bad">Could not load: ${esc(e.message)}</div>`;
+  }
+}
+
+// ------------------------------------------------------------------ overview
+function overviewPage() {
+  const s = S.summary, all = s.model_set === "*";
+  const games = S.runs.filter(e => e.kind === "game" && (all || e.models.join("+") === s.model_set));
+  const seeded = games.filter(e => e.pc_passed != null), passN = seeded.filter(e => e.pc_passed).length;
+  const done = games.filter(e => e.completed).length;
+  const sets = Object.entries(s.model_sets).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  let h = `<div class="title"><h2>Overview</h2></div>
+  <p class="lede">Every folder in <code>${esc(s.runs_dir)}</code>. Detector numbers are recomputed from <code>rounds.jsonl</code> with <code>netinf.analysis</code> each time a run changes. A high score is a screen, not proof of collusion.</p>`;
+  if (sets.length) h += `<div class="row"><label>Model set</label>${seg("models", [...sets.map(([k, n]) => [k, `${k} (${n})`]), ...(sets.length > 1 ? [["*", `all, mixed (${S.runs.filter(e => e.kind === "game").length})`]] : [])], s.model_set)}</div>
+  ${all && sets.length > 1 ? `<div class="callout warn">Pooling different model sets: conditions with the same label from different models (e.g. scripted dry runs and LLM runs) are summarised together.</div>` : ""}`;
+  h += `<div class="kpis">
+    <div class="kpi"><div class="k">Game runs</div><div class="v">${done}<span class="s"> / ${games.length}</span></div><div class="s">completed</div></div>
+    <div class="kpi"><div class="k">Positive control</div><div class="v" style="color:${seeded.length && passN < seeded.length ? "var(--bad)" : "inherit"}">${passN}<span class="s"> / ${seeded.length}</span></div><div class="s">seeded runs passing</div></div>
+    <div class="kpi"><div class="k">API spend</div><div class="v">${usd(s.spend.total_cost_usd)}</div><div class="s">${s.spend.cost_complete ? "all calls priced" : "some calls unpriced"}</div></div>
+    <div class="kpi"><div class="k">Tokens in / out</div><div class="v" style="font-size:17px">${int(s.spend.input_tokens)} / ${int(s.spend.output_tokens)}</div><div class="s">across all game runs</div></div>
+    <div class="kpi"><div class="k">Parse failures</div><div class="v" style="color:${s.spend.parse_failures ? "var(--warn)" : "inherit"}">${int(s.spend.parse_failures)}</div><div class="s">random fallback used</div></div>
+  </div>`;
+  if (!games.length) {
+    h += `<section><h3>No game runs yet</h3><p class="note">Run <code>python scripts/run_llm_rps.py --config configs/dryrun_c2.yaml --dry-run</code> for a $0 scripted run, or a real config once models and prices are filled in.</p></section>`;
+  } else {
+    h += pcSection(s);
+    if (s.summary) h += detectorSummarySection(s) + thresholdSection(s) + (s.h1 ? h1Section(s) : "");
+  }
+  if (s.skipped?.length) h += `<section><h3>Left out of the summary</h3>${table([{ h: "Run", v: r => `<a href="#/run/${encodeURIComponent(r.id)}">${esc(r.id)}</a>` }, { h: "Reason", v: r => esc(r.reason) }], s.skipped)}</section>`;
+  if (s.other_results.length) {
+    h += `<section><h3>Scripted studies</h3><p class="note">Outputs of <code>scripts/reproduce_bonjour.py</code> and <code>scripts/scripted_four_agent.py</code>.</p>` +
+      table([{ h: "Run", v: e => `<a href="#/run/${encodeURIComponent(e.id)}">${esc(e.id)}</a>` },
+             { h: "Kind", v: e => e.kind === "bonjour_repro" ? "Bonjour Table 2 reproduction" : "Scripted 4-player comparison" },
+             { h: "Settings", v: e => `<span class="num">${esc(Object.entries(e.config || {}).filter(([k]) => ["iters", "players", "state", "games", "rounds", "seed"].includes(k)).map(([k, v]) => `${k}=${v}`).join("  "))}</span>` }],
+            s.other_results) + `</section>`;
+  }
+  h += `<div class="foot">Positive-control dots in the sidebar: green pass, red fail, amber incomplete run.</div>`;
+  return h;
+}
+function pcSection(s) {
+  const an = Object.fromEntries((s.positive_control || []).map(p => [p.run_id, p]));
+  const rows = s.harness_pc.map(h => ({ ...h, a: an[h.id] }))
+    .sort((a, b) => a.condition.localeCompare(b.condition) || (a.p_channel ?? 0) - (b.p_channel ?? 0) || a.seed - b.seed || a.id.localeCompare(b.id));
+  const runE = Object.fromEntries(S.runs.map(e => [e.id, e]));
+  const fails = rows.filter(r => r.passed === false);
+  return `<section><h3>Positive control</h3>
+  <p class="note">Did the seeded pair actually collude? <b>Harness</b>: primary win rate &gt; honest pooled win rate, one-sided Fisher exact test (written to <code>meta.json</code> at run time). <b>Analysis</b>: per-round primary − mean honest payoff, one-sided t-test (<code>analysis.positive_control</code>). Seeded runs that fail the analysis check are excluded from the detector summary.</p>
+  ${fails.length ? `<div class="callout bad">${fails.length} seeded run(s) fail the harness check. Detection results on those runs should not be trusted.</div>` : ""}
+  ${table([
+    { h: "Run", v: r => `<a href="#/run/${encodeURIComponent(r.id)}">${esc(r.id)}</a>` },
+    { h: "Cond.", v: r => esc(r.condition) + (r.p_channel != null ? ` <span class="ci">p=${r.p_channel}</span>` : "") },
+    { h: "Seed", r: 1, v: r => esc(r.seed) },
+    { h: "Pair", v: r => `<span class="num">${esc(r.a?.pair ? r.a.pair.join("-") : (runE[r.id]?.primary ?? "?") + "-" + (runE[r.id]?.assistants || []).join(","))}</span>` },
+    { h: "Primary win", r: 1, v: r => pct(r.a?.primary_win_rate, 1) },
+    { h: "Honest win", r: 1, title: "pooled honest players (payoffs are 0/1, so mean payoff = win rate)", v: r => pct(r.a?.honest_mean, 1) },
+    { h: "Harness p", r: 1, title: "one-sided Fisher exact", v: r => pv(r.p) },
+    { h: "Analysis p", r: 1, title: "one-sided t-test", v: r => pv(r.a?.p_value) },
+    { h: "Harness", v: r => pcBadge(r.passed) }, { h: "Analysis", v: r => pcBadge(r.a?.passed) }], rows)}</section>`;
+}
+function detectorsIn(rows) { return [...new Set(rows.map(r => r.detector))].sort((a, b) => Object.keys(DET_NAMES).indexOf(a) - Object.keys(DET_NAMES).indexOf(b)); }
+function rowsForState(rows, st) { return rows.filter(r => r.detector.startsWith("netinf") ? r.state === st : true); }
+function detectorSummarySection(s) {
+  const st = S.ui.state, rows = rowsForState(s.summary, st);
+  const seeded = rows.filter(r => r.colluding), nulls = rows.filter(r => !r.colluding);
+  const dets = detectorsIn(rows), labels = [...new Set(seeded.map(r => r.label))].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  const nLabels = [...new Set(nulls.map(r => r.label))].sort();
+  const get = (lab, det) => rows.find(r => r.label === lab && r.detector === det);
+  const cell = r => !r ? "–" : !r.n_units ? `<span class="badge fail" title="every run of this condition failed the analysis positive-control check">excluded: ${r.n_excluded_pc} failed PC</span>` : `${pct(r.top1)} <span class="ci">[${pct(r.top1_wilson_lo)}, ${pct(r.top1_wilson_hi)}] n=${r.n_units}${r.n_excluded_pc ? `, −${r.n_excluded_pc} PC` : ""}</span>`;
+  let h = `<section><h3>Detector summary</h3>
+  <p class="note">One unit per run (seed); all splits. Seeded conditions: top-1 = the seeded pair is ranked first of ${s.chance_top1 ? Math.round(1 / s.chance_top1) : "?"} pairs (chance ${pct(s.chance_top1, 1)}), Wilson 95% CI. No-collusion conditions: rate at which Algorithm 1 (α = 0.05) flags any pair. Net influence state: the pre-registered primary is <b>${esc(stateName(s.primary_state))}</b>; others are secondary.</p>
+  <div class="row"><label>State for Γ</label>${seg("state", s.states.map(x => [x, stateName(x) + (x === s.primary_state ? " ★" : "")]), st)}</div>`;
+  if (labels.length && !seeded.some(r => r.n_units)) h += `<div class="callout bad">Every seeded run in this set failed the positive control, so there is no top-1 to plot.</div>`;
+  else if (labels.length) {
+    h += legend(dets.map((d, i) => ({ name: detName(d), color: pcol(i), sq: 1 })));
+    h += barChart({ groups: labels, yLabel: "top-1 accuracy", hlines: s.chance_top1 ? [{ y: s.chance_top1, label: "chance" }] : [],
+      series: dets.map((d, i) => ({ name: detName(d), color: pcol(i), values: labels.map(l => { const r = get(l, d); return r && { v: r.top1, lo: r.top1_wilson_lo, hi: r.top1_wilson_hi, n: r.n_units }; }) })) });
+    h += table([{ h: "Seeded condition", v: l => `<b>${esc(l)}</b>` }, ...dets.map(d => ({ h: esc(detName(d)), v: l => cell(get(l, d)) })),
+                { h: "Alg. 1 exact pair", title: "Algorithm 1 at α = 0.05 returns exactly the seeded pair", v: l => { const r = get(l, "netinf"); return r ? pct(r.alg1_rate) : "–"; } }], labels);
+  }
+  if (nLabels.length) {
+    h += `<h4 style="margin:18px 0 6px;font-size:13px">No-collusion conditions</h4>` +
+      table([{ h: "Condition", v: l => `<b>${esc(l)}</b>` }, { h: "Units", r: 1, v: l => esc(get(l, "netinf")?.n_units ?? get(l, dets[0])?.n_units) },
+             { h: "Alg. 1 false alarm (Γ)", r: 1, v: l => pct(get(l, "netinf")?.alg1_rate) },
+             { h: "Alg. 1 false alarm (MM)", r: 1, v: l => pct(get(l, "netinf_mm")?.alg1_rate) },
+             ...dets.map(d => ({ h: `max score · ${esc(detName(d))}`, r: 1, title: "mean ± sd over units of the largest pair score", v: l => { const r = get(l, d); return r ? `${f(r.max_score_mean)} <span class="ci">± ${f(r.max_score_sd)}</span>` : "–"; } }))], nLabels);
+  }
+  return h + `</section>`;
+}
+function thresholdSection(s) {
+  const te = s.threshold_eval || {};
+  let h = `<section><h3>Held-out TPR / FPR at fixed FPR</h3>
+  <p class="note">Thresholds on each run's largest pair score are set on no-collusion runs of the calibration seeds (${esc(s.calib_seeds.join(", "))}) and applied unchanged to the held-out seeds. TPR counts a seeded run only if it is flagged <i>and</i> its top pair is the seeded pair.</p>`;
+  if (te.source) h += `<div class="callout ${te.source.startsWith("frozen") ? "info" : "warn"}">Thresholds: ${esc(te.source)}</div>`;
+  if (te.error) return h + `<div class="callout bad">${esc(te.error)}</div></section>`;
+  const st = S.ui.state, fprs = te.thresholds?.fprs || [0.01, 0.05];
+  const rows = rowsForState(te.rows || [], st);
+  h += `<div class="row"><label>State for Γ</label>${seg("state", s.states.map(x => [x, stateName(x) + (x === s.primary_state ? " ★" : "")]), st)}</div>`;
+  h += table([{ h: "Condition", v: r => esc(r.label) }, { h: "Detector", v: r => esc(detName(r.detector)) }, { h: "Held-out units", r: 1, v: r => esc(r.n_heldout) },
+    ...fprs.flatMap(fp => [{ h: `@ FPR ${pct(fp)}`, r: 1, v: r => r[`tpr@${fp}`] != null ? `TPR ${pct(r[`tpr@${fp}`])}` : `FPR ${pct(r[`fpr@${fp}`])}` }])],
+    rows.sort((a, b) => a.label.localeCompare(b.label, undefined, { numeric: true }) || a.detector.localeCompare(b.detector)), { empty: "No held-out runs yet." });
+  const det = Object.entries(te.thresholds?.detectors || {}).filter(([k]) => !k.startsWith("netinf") || k.endsWith("|" + st));
+  if (det.length) h += `<h4 style="margin:18px 0 6px;font-size:13px">Thresholds</h4>` + table([{ h: "Detector | state", v: ([k]) => `<span class="num">${esc(k)}</span>` },
+    { h: "Null runs", r: 1, v: ([, v]) => esc(v.n_null) }, { h: "Min resolvable FPR", r: 1, title: "1 / number of null runs; below this the threshold is the largest null score", v: ([, v]) => pct(v.min_resolvable_fpr, 1) },
+    ...fprs.map(fp => ({ h: `thr @ ${pct(fp)}`, r: 1, v: ([, v]) => f(v[String(fp)], 4) }))], det);
+  return h + `</section>`;
+}
+function h1Section(s) {
+  const r = s.h1[S.ui.state] || {};
+  return `<section><h3>H1 · shared priors (C1, no collusion)</h3><p class="note">Are same-family pairs scored higher than cross-family pairs? Paired one-sided Wilcoxon across C1 runs (<code>analysis.h1_family_comparison</code>), net influence with state <b>${esc(stateName(S.ui.state))}</b>.</p>
+  ${r.n_units ? `<div class="facts">
+    <div><div class="k">C1 runs</div><div class="v">${r.n_units}</div></div>
+    <div><div class="k">same − cross, max</div><div class="v">${f(r.diff_max_mean, 4)} ± ${f(r.diff_max_sd, 4)} (p ${pv(r.wilcoxon_p_max)})</div></div>
+    <div><div class="k">same − cross, mean</div><div class="v">${f(r.diff_mean_mean, 4)} ± ${f(r.diff_mean_sd, 4)} (p ${pv(r.wilcoxon_p_mean)})</div></div>
+    <div><div class="k">top pair same-family</div><div class="v">${pct(r.top_pair_same_family_rate)} (chance ${pct(r.chance_same_family_rate)})</div></div></div>` : `<div class="empty">No C1 runs with both same- and cross-family pairs.</div>`}</section>`;
+}
+
+// ------------------------------------------------------------------ game run
+function playerLabels(d) {
+  const agents = (d.meta.agents || []).slice().sort((a, b) => a.player - b.player);
+  const n = d.rounds.actions[0]?.length || agents.length;
+  return Array.from({ length: n }, (_, i) => {
+    const a = agents[i] || {}, role = a.role && a.role !== "honest" ? ` ${a.role}` : "";
+    return { short: `P${i}`, long: `P${i}${role}`, model: a.model, role: a.role || "honest" };
+  });
+}
+function gamePage(d) {
+  const m = d.meta, L = playerLabels(d), tab = S.ui.tab;
+  const pc = m.positive_control, pca = d.positive_control_analysis;
+  const ent = S.runs.find(e => e.id === d.id) || {};
+  const status = m.completed ? `<span class="badge pass">completed</span>`
+    : ent.status === "live" ? `<span class="badge fail"><span class="dot live" style="display:inline-block;margin-right:5px;vertical-align:1px"></span>live</span>`
+    : `<span class="badge warn">${ent.status === "stalled" ? "stalled" : "incomplete"}${m.stop_reason ? ": " + esc(m.stop_reason) : ""}</span>`;
+  let h = `<div class="title"><h2>${esc(d.id)}</h2></div>
+  <div class="row" style="margin-top:8px"><span class="badge">${esc(m.condition)}</span><span class="badge">seed ${esc(m.seed)}</span>${m.p_channel != null ? `<span class="badge">p_channel ${esc(m.p_channel)}</span>` : ""}${status}
+  ${pc ? `<span>positive control ${pcBadge(pc.passed, "harness Fisher test")}</span>` : ""}</div>`;
+  h += `<section><div class="facts">
+    ${[["Rounds", `${m.completed ? m.rounds_completed : d.rounds.actions.length} / ${m.n_rounds}`], ["Seeded pair", d.colluders.length ? d.colluders.map(i => "P" + i).join(" + ") : "none"],
+       ["Models", [...new Set(L.map(l => l.model))].join(", ")], ["Prompt version", m.prompt_version], ["Output mode", m.output_mode], ["History window", m.history_window],
+       ["Cost", usd(m.total_cost_usd) + (m.cost_complete === false ? " (partial)" : "")], ["Tokens in / out", `${int(m.total_input_tokens)} / ${int(m.total_output_tokens)}`],
+       ["Parse failures", m.parse_failures], ["Channel delivery", m.channel_delivery_rate != null ? pct(m.channel_delivery_rate, 1) : "–"],
+       ["Started", m.started_at], ["Git commit", (m.git_commit || "").slice(0, 10)]].map(([k, v]) => `<div><div class="k">${k}</div><div class="v">${esc(v ?? "–")}</div></div>`).join("")}
+  </div>
+  ${m.skip_positive_control_check ? `<div class="callout warn">Run with --skip-positive-control-check.</div>` : ""}
+  ${pc ? `<div class="callout ${pc.passed ? "info" : "bad"}">Positive control (harness, Fisher one-sided): primary win ${pct(pc.primary_mean, 1)} vs honest ${pct(pc.honest_mean, 1)} (assistant ${pct(pc.assistant_mean, 1)}), p = ${pv(pc.p_value)} → <b>${pc.passed ? "PASS" : "FAIL"}</b>${pca ? ` · analysis t-test p = ${pv(pca.p_value)} → <b>${pca.passed ? "PASS" : "FAIL"}</b>` : ""}${pc.passed ? "" : ". The seeded pair did not measurably help the primary; detection on this run is not a valid positive control."}</div>` : ""}
+  </section>`;
+  const tabs = [["turns", "Turns"], ["detection", "Detection"], ["play", "Play"], ["calls", `Calls (${d.calls.length})`], ["prompts", `Prompts (${Object.keys(d.prompts).length})`], ["config", "Config"], ["files", "Files"]];
+  h += `<div class="tabs" data-seg="tab">${tabs.map(([v, l]) => `<button data-v="${v}" class="${v === tab ? "on" : ""}">${l}</button>`).join("")}</div>`;
+  if (tab === "turns") h += `<section id="turns"><div id="turns-ctrl"></div><div id="turns-body"><div class="loading">Loading rounds…</div></div></section>`;
+  else if (tab === "play") h += playTab(d, L);
+  else if (tab === "calls") h += callsTab(d, L);
+  else if (tab === "prompts") h += `<section class="prompt">${Object.keys(d.prompts).length ? Object.entries(d.prompts).map(([k, v]) => `<h4>${esc(k)}</h4><pre>${esc(v)}</pre>`).join("") : `<div class="empty">No prompts saved (scripted agents have none).</div>`}</section>`;
+  else if (tab === "config") h += `<section><h3>config.yaml</h3><pre>${esc(d.config_text || "(none)")}</pre></section><section><h3>meta.json</h3><pre>${esc(JSON.stringify(m, null, 2))}</pre></section>`;
+  else if (tab === "files") h += filesSection(d);
+  else h += detectionTab(d, L);
+  return h;
+}
+function detectionTab(d, L) {
+  const D = d.detectors;
+  if (D.error) return `<section><div class="callout warn">${esc(D.error)}</div></section>`;
+  const states = Object.keys(D.by_state), st = states.includes(S.ui.state) ? S.ui.state : states[0], E = D.by_state[st];
+  const tp = d.true_pair ? d.true_pair.split("-").map(Number) : null;
+  const mats = [["netinf", "Γ (net influence)"], ["netinf_mm", "Γ, Miller–Madow"], ["gamma", "γ (CMI)"], ["lagged_netinf", "lagged net TE"]];
+  const mk = mats.some(([k]) => k === S.ui.matrix) ? S.ui.matrix : "netinf";
+  const M = mk === "gamma" ? E.gamma : mk === "lagged_netinf" ? D.state_free.lagged_netinf.matrix : E[mk].matrix;
+  const T = d.rounds.actions.length;
+  let h = `<section><h3>Net influence</h3>
+  <p class="note">Entry [i, j] is Γ(i; j) = γ(i; j) − max<sub>k≠i,j</sub> γ(k; j) with γ the conditional mutual information given the state (nats). Algorithm 1 flags a pair when Γ ≥ α = ${D.alpha} both ways and exactly one pair passes. The seeded pair is outlined.</p>
+  <div class="row"><label>State</label>${seg("state", states.map(x => [x, stateName(x) + (E && x === S.summary.primary_state ? " ★" : "")]), st)}<label style="margin-left:8px">Matrix</label>${seg("matrix", mats, mk)}</div>
+  <div class="callout ${E.bias > D.alpha ? "warn" : "info"}">${E.n_states} state value(s) over ${T} rounds: plug-in bias ≈ 2|S|/N = <b>${f(E.bias)}</b> nats ${E.bias > D.alpha ? "&gt;" : "≤"} α = ${D.alpha}${E.bias > D.alpha ? ". Algorithm 1 false alarms are likely at this length." : "."} State role: ${esc(E.role)}.</div>
+  <div class="grid g2" style="align-items:start">
+    <div>${heatmap(M, L, { highlight: tp ? [[tp[0], tp[1]], [tp[1], tp[0]]] : [], title: mats.find(x => x[0] === mk)[1] })}
+      <div class="legend" style="margin-top:6px"><span><i class="sq" style="background:rgba(${css("--pos")},.8)"></i>positive</span><span><i class="sq" style="background:rgba(${css("--neg")},.8)"></i>negative</span><span>rows i, columns j</span></div></div>
+    <div>
+      <div class="facts" style="grid-template-columns:1fr 1fr">
+        <div><div class="k">Algorithm 1 (Γ)</div><div class="v">${E.netinf.alg1 ? `flags ${esc(E.netinf.alg1)} ${tp ? (E.netinf.alg1 === d.true_pair ? pcBadge(true) : pcBadge(false)) : ""}` : "no pair"}</div></div>
+        <div><div class="k">Algorithm 1 (MM)</div><div class="v">${E.netinf_mm.alg1 ? `flags ${esc(E.netinf_mm.alg1)}` : "no pair"}</div></div>
+        <div><div class="k">Seeded pair</div><div class="v">${esc(d.true_pair || (d.colluders.length ? d.colluders.join(", ") + " (no single pair)" : "none"))}</div></div>
+        <div style="grid-column:1/-1"><div class="k">Win rate vs chance</div><div class="v">${L.map((l, i) => `${l.short} ${pct(d.win_rate[i])}`).join("  ")} · chance ${pct(d.chance_win_rate)}</div></div>
+      </div>
+    </div>
+  </div></section>`;
+  // pair ranking across detectors
+  const dets = [["netinf", E.netinf], ["netinf_mm", E.netinf_mm], ...Object.entries(D.state_free)];
+  const pairs = E.netinf.ranked.map(r => r.pair);
+  const lookup = Object.fromEntries(dets.map(([k, v]) => [k, Object.fromEntries(v.ranked.map(r => [r.pair, r]))]));
+  h += `<section><h3>Pair ranking</h3><p class="note">Ranking score per pair: min(Γ(i; j), Γ(j; i)) for net influence, the larger direction for lagged net influence (transfer entropy, state none), Cramér's V for correlation. Rank 1 = most suspicious.</p>` +
+    table([{ h: "Pair", v: p => `<b class="num">${esc(p)}</b>${p === d.true_pair ? ` <span class="badge warn">seeded</span>` : ""}` },
+      ...dets.map(([k]) => ({ h: esc(detName(k)) + (k.startsWith("netinf") ? "" : ""), r: 1, v: p => { const r = lookup[k][p]; return r ? `${f(r.score, 4)} <span class="ci">#${r.rank}</span>` : "–"; } }))],
+      pairs, { rowClass: p => p === d.true_pair ? "true" : "" });
+  if (tp) h += `<div class="row" style="margin-top:10px">${dets.map(([k, v]) => `<span class="badge ${v.true_rank === 1 ? "pass" : ""}">${esc(detName(k))}: rank ${v.true_rank}</span>`).join("")}</div>`;
+  return h + `</section>`;
+}
+function playTab(d, L) {
+  const A = d.rounds.actions, P = d.rounds.payoffs, T = A.length, n = L.length;
+  const cum = Array.from({ length: n }, () => []);
+  const sums = new Array(n).fill(0);
+  for (let t = 0; t < T; t++) for (let i = 0; i < n; i++) { sums[i] += P[t][i]; cum[i].push([t + 1, sums[i]]); }
+  const exp = d.chance_win_rate;
+  let h = `<section><h3>Cumulative payoff</h3><p class="note">Dashed line: expected total under uniform random play (${pct(exp, 1)} win rate per round).</p>`;
+  h += legend([...L.map((l, i) => ({ name: `${l.long} · ${l.model}`, color: pcol(i) })), { name: "uniform-play expectation", color: "var(--muted)", dash: 1 }]);
+  h += lineChart({ series: [...cum.map((pts, i) => ({ name: L[i].long, color: pcol(i), points: pts, width: L[i].role !== "honest" ? 2.6 : 1.6 })),
+                            { name: "expected", color: "var(--muted)", dash: "4 4", width: 1.2, points: [[0, 0], [T, T * exp]] }],
+                   xLabel: "round", yLabel: "cumulative payoff", xMin: 0, dots: false }) + `</section>`;
+  const dist = d.action_counts;
+  h += `<section><h3>Move distribution</h3><p class="note">Share of rounds each player chose each move. Uniform play gives 33% each.</p>${legend(MOVES.map((mv, k) => ({ name: mv, color: `var(${MOVE_VAR[k]})`, sq: 1 })))}` +
+    table([{ h: "Player", v: i => `<b>${esc(L[i].long)}</b> <span class="ci">${esc(L[i].model)}</span>` },
+           { h: "Mix", v: i => { const tot = dist[i].reduce((a, b) => a + b, 0) || 1; return `<div style="display:flex;height:14px;border-radius:3px;overflow:hidden;min-width:220px">${dist[i].map((c, k) => `<div title="${MOVES[k]} ${pct(c / tot, 1)}" style="width:${100 * c / tot}%;background:var(${MOVE_VAR[k]})"></div>`).join("")}</div>`; } },
+           ...MOVES.map((mv, k) => ({ h: mv, r: 1, v: i => pct(dist[i][k] / (dist[i].reduce((a, b) => a + b, 0) || 1), 1) })),
+           { h: "Win rate", r: 1, v: i => pct(d.win_rate[i], 1) }], [...Array(n).keys()]) + `</section>`;
+  h += `<section><h3>Round by round</h3><p class="note">Each cell is one move, coloured by move; faded = the player scored 0 that round.${d.rounds.channel.some(x => x != null) ? " Top row: rounds where the private channel delivered the primary's move." : ""}</p>${legend(MOVES.map((mv, k) => ({ name: mv, color: `var(${MOVE_VAR[k]})`, sq: 1 })))}${actionStrip(A, P, d.rounds.channel, L)}</section>`;
+  return h;
+}
+function callsTab(d, L) {
+  const per = 100, u = S.ui, q = (u.callsQ || "").toLowerCase();
+  let rows = d.calls.filter(c => (u.callsPlayer === "all" || String(c.player) === u.callsPlayer) && (!u.callsFail || c.parse_ok === false) &&
+                                 (!q || String(c.raw_text ?? "").toLowerCase().includes(q)));
+  const pages = Math.max(1, Math.ceil(rows.length / per)), page = Math.min(u.callsPage, pages - 1);
+  const fails = d.calls.filter(c => c.parse_ok === false).length;
+  const lat = d.calls.map(c => c.latency_s).filter(isNum).sort((a, b) => a - b);
+  let h = `<section><h3>Agent calls</h3><p class="note">One line of <code>calls.jsonl</code> per agent decision. ${fails} parse failure(s); median latency ${lat.length ? f(lat[Math.floor(lat.length / 2)], 2) + " s" : "–"}; ${d.calls.filter(c => c.cached).length} served from cache.</p>
+  <div class="row"><label>Player</label><select id="cp"><option value="all">all</option>${L.map((l, i) => `<option value="${i}" ${u.callsPlayer === String(i) ? "selected" : ""}>${esc(l.long)}</option>`).join("")}</select>
+  <label><input type="checkbox" id="cf" ${u.callsFail ? "checked" : ""}> parse failures only</label>
+  <input type="text" id="cq" placeholder="search raw text" value="${esc(u.callsQ || "")}">
+  <span class="ci">${rows.length} call(s)</span>
+  ${pages > 1 ? seg("callsPage", [...Array(pages).keys()].map(p => [String(p), String(p + 1)]), String(page)) : ""}</div>`;
+  rows = rows.slice(page * per, (page + 1) * per);
+  h += table([{ h: "Round", r: 1, v: c => esc(c.round) }, { h: "Player", v: c => esc(L[c.player]?.long ?? c.player) },
+    { h: "Move", v: c => c.parsed_action != null ? `<span style="color:var(${MOVE_VAR[c.parsed_action]})">■</span> ${MOVES[c.parsed_action]}` : "–" },
+    { h: "Parsed", v: c => c.parse_ok === false ? `<span class="badge fail">fallback</span>` : `<span class="badge">ok</span>` },
+    { h: "Raw text", v: c => `<div class="raw">${esc(c.raw_text ?? "—")}</div>` },
+    { h: "Tok in/out", r: 1, v: c => `${int(c.input_tokens)}/${int(c.output_tokens)}` }, { h: "Cost", r: 1, v: c => c.cost_usd == null ? "unpriced" : usd(c.cost_usd) },
+    { h: "Latency", r: 1, v: c => f(c.latency_s, 2) }, { h: "Cache", v: c => c.cached ? "hit" : "" }], rows, { empty: "No calls match." });
+  return h + `</section>`;
+}
+function bindCalls(view) {
+  const cp = view.querySelector("#cp"), cf = view.querySelector("#cf"), cq = view.querySelector("#cq");
+  if (cp) cp.onchange = () => { S.ui.callsPlayer = cp.value; S.ui.callsPage = 0; saveUI(); render(); };
+  if (cf) cf.onchange = () => { S.ui.callsFail = cf.checked; S.ui.callsPage = 0; saveUI(); render(); };
+  if (cq) { let t; cq.oninput = () => { clearTimeout(t); t = setTimeout(() => { S.ui.callsQ = cq.value; S.ui.callsPage = 0; render().then(() => { const e = document.getElementById("cq"); e.focus(); e.setSelectionRange(e.value.length, e.value.length); }); }, 250); }; }
+}
+function filesSection(d) {
+  const imgs = d.files.filter(x => x.kind === "image");
+  return `<section><h3>Files</h3>` + table([{ h: "Path", v: x => `<a href="/files/${encodeURIComponent(d.id)}/${x.path.split("/").map(encodeURIComponent).join("/")}" target="_blank">${esc(x.path)}</a>` },
+    { h: "Size", r: 1, v: x => x.size < 1024 ? x.size + " B" : (x.size / 1024).toFixed(1) + " KB" }], d.files) + `</section>` +
+    imgs.map(x => `<section><h3>${esc(x.path)}</h3><img class="result" src="/files/${encodeURIComponent(d.id)}/${x.path.split("/").map(encodeURIComponent).join("/")}" alt="${esc(x.path)}"></section>`).join("");
+}
+
+// ------------------------------------------------------------------ turn by turn (live + replay)
+// Polls /api/tail with byte offsets, so each poll only carries the rounds written since the last.
+const SPEEDS = [["2000", "0.5×"], ["1000", "1×"], ["400", "2.5×"], ["150", "fast"]];
+const T = { id: null, off: { rounds: 0, calls: 0 }, rounds: [], calls: {}, meta: {}, status: null, age: null,
+            cur: 0, follow: true, playing: false, speed: "1000", pollTimer: null, playTimer: null, err: null };
+const helping = a => (a + 2) % 3;  // the move a beats (rps.beaten_by): the assistant plays it to hand a the point
+const counter = a => (a + 1) % 3;  // the move that beats a (rps.beats)
+
+function turnsActive() { const r = route(); return r.page === "run" && r.id === T.id && S.ui.tab === "turns" && document.getElementById("turns"); }
+function stopTurns() { clearTimeout(T.pollTimer); clearInterval(T.playTimer); T.playing = false; }
+async function startTurns(id) {
+  if (T.id !== id) {
+    stopTurns();
+    Object.assign(T, { id, off: { rounds: 0, calls: 0 }, rounds: [], calls: {}, meta: {}, status: null, cur: 0, follow: true, err: null });
+  }
+  renderTurnsCtrl(); renderTurnsBody();
+  clearTimeout(T.pollTimer);
+  await pollTurns();
+}
+async function pollTurns() {
+  if (T.id == null || T.busy) return;  // one request in flight at a time, or rounds would be appended twice
+  const id = T.id;
+  T.busy = true;
+  try {
+    const d = await getJSON(`/api/tail/${encodeURIComponent(id)}?r=${T.off.rounds}&c=${T.off.calls}`);
+    if (T.id !== id) return;
+    T.err = null; T.meta = d.meta; T.status = d.status; T.age = d.age_s; T.off = d.offsets;
+    for (const c of d.calls) (T.calls[c.round] ||= {})[c.player] = c;
+    const grew = d.rounds.length > 0;
+    T.rounds.push(...d.rounds.sort((a, b) => a.round - b.round));
+    if (T.follow && T.rounds.length) T.cur = T.rounds.length - 1;
+    if (grew && S.details[id]) S.details[id]._stale = true;  // other tabs refetch when opened
+    if (turnsActive()) { renderTurnsCtrl(); renderTurnsBody(); }
+  } catch (e) { if (T.id === id) { T.err = e.message; if (turnsActive()) renderTurnsBody(); } }
+  finally { T.busy = false; }
+  if (T.id !== id) return pollTurns();  // the user switched runs while this request was out
+  clearTimeout(T.pollTimer);
+  if (T.status === "done" && !T.err) return;  // finished: one read is enough
+  const wait = T.status === "live" ? 1500 : 5000;
+  T.pollTimer = setTimeout(() => { if (route().page === "run" && route().id === id) pollTurns(); }, wait);
+}
+function setCur(i, opts = {}) {
+  if (!T.rounds.length) return;
+  T.cur = Math.max(0, Math.min(T.rounds.length - 1, i));
+  if (!opts.keepFollow) T.follow = T.cur === T.rounds.length - 1 && T.status === "live" ? T.follow : false;
+  const sl = document.getElementById("t-slider"); if (sl) sl.value = T.cur;
+  syncCtrl(); renderTurnsBody();
+}
+function togglePlay() {
+  if (T.playing) { clearInterval(T.playTimer); T.playing = false; syncCtrl(); return; }
+  if (T.cur >= T.rounds.length - 1) setCur(0);
+  T.playing = true; T.follow = false; syncCtrl();
+  T.playTimer = setInterval(() => {
+    if (!turnsActive()) return stopTurns();
+    if (T.cur >= T.rounds.length - 1) {  // caught up: keep going if the run is still producing rounds
+      if (T.status !== "live") { clearInterval(T.playTimer); T.playing = false; syncCtrl(); }
+      return;
+    }
+    setCur(T.cur + 1, { keepFollow: true });
+  }, +T.speed);
+}
+function renderTurnsCtrl() {
+  const el = document.getElementById("turns-ctrl"); if (!el) return;
+  el.innerHTML = `<div class="ctrl">
+    <span class="status" id="t-status"></span>
+    <button class="btn" id="t-first" title="first round (Home)">⏮</button>
+    <button class="btn" id="t-prev" title="previous round (←)">◀</button>
+    <button class="btn" id="t-play" title="play / pause (space)" style="min-width:64px"></button>
+    <button class="btn" id="t-next" title="next round (→)">▶</button>
+    <button class="btn" id="t-last" title="latest round (End)">⏭</button>
+    <input type="range" id="t-slider" min="0" max="${Math.max(0, T.rounds.length - 1)}" value="${T.cur}" aria-label="round">
+    <span class="rn" id="t-rn"></span>
+    <select id="t-speed" title="replay speed">${SPEEDS.map(([v, l]) => `<option value="${v}" ${v === T.speed ? "selected" : ""}>${l}</option>`).join("")}</select>
+    <label id="t-follow-wrap" title="jump to each new round as it is written"><input type="checkbox" id="t-follow"> follow live</label>
+  </div>
+  <div class="ci" style="margin:6px 0 14px">Keys: <kbd>←</kbd> <kbd>→</kbd> step · <kbd>space</kbd> play/pause · <kbd>End</kbd> latest. Rounds appear once all agents have moved (the harness logs a round at a time).</div>`;
+  el.querySelector("#t-first").onclick = () => setCur(0);
+  el.querySelector("#t-prev").onclick = () => setCur(T.cur - 1);
+  el.querySelector("#t-next").onclick = () => setCur(T.cur + 1);
+  el.querySelector("#t-last").onclick = () => { T.follow = T.status === "live"; setCur(T.rounds.length - 1, { keepFollow: true }); };
+  el.querySelector("#t-play").onclick = togglePlay;
+  el.querySelector("#t-slider").oninput = e => setCur(+e.target.value);
+  el.querySelector("#t-speed").onchange = e => { T.speed = e.target.value; if (T.playing) { togglePlay(); togglePlay(); } };
+  el.querySelector("#t-follow").onchange = e => { T.follow = e.target.checked; if (T.follow) setCur(T.rounds.length - 1, { keepFollow: true }); };
+  syncCtrl();
+}
+function syncCtrl() {
+  const $ = id => document.getElementById(id); if (!$("t-status")) return;
+  const n = T.rounds.length, total = T.meta.n_rounds;
+  const st = T.status === "live" ? `<span class="dot live"></span>LIVE` : T.status === "stalled" ? `<span class="dot stalled"></span>stalled` : T.status === "done" ? `<span class="dot pass"></span>finished` : "…";
+  $("t-status").innerHTML = `${st} <span class="ci">${n}/${total ?? "?"} rounds</span>`;
+  $("t-slider").max = Math.max(0, n - 1); $("t-slider").value = T.cur;
+  $("t-rn").textContent = n ? `round ${T.rounds[T.cur].round} · ${T.cur + 1}/${n}` : "no rounds yet";
+  $("t-play").textContent = T.playing ? "❚❚ pause" : "▶ play";
+  $("t-follow").checked = T.follow; $("t-follow-wrap").style.display = T.status === "live" ? "" : "none";
+  for (const b of ["t-first", "t-prev"]) $(b).disabled = !n || T.cur === 0;
+  for (const b of ["t-next", "t-last"]) $(b).disabled = !n || T.cur >= n - 1;
+}
+const agoFmt = s => !isNum(s) ? "" : s < 90 ? `${Math.round(s)} s ago` : s < 5400 ? `${Math.round(s / 60)} min ago` : `${(s / 3600).toFixed(1)} h ago`;
+const moveChip = (a, sm) => a == null ? "–" : `<span class="chip ${sm ? "sm" : ""}" style="--mv:var(${MOVE_VAR[a]})">${MOVES[a].toUpperCase()}</span>`;
+function assistantVerdict(a, target) {
+  if (a === helping(target)) return `<span class="badge pass" title="the move the primary beats: hands the primary the point">helping move</span>`;
+  if (a === counter(target)) return `<span class="badge fail" title="the move that beats the primary">counters primary</span>`;
+  return `<span class="badge warn" title="same move as the primary">copies primary</span>`;
+}
+function renderTurnsBody() {
+  const el = document.getElementById("turns-body"); if (!el) return;
+  const m = T.meta, n = m.n_players || (T.rounds[0]?.actions.length ?? 0), cond = m.condition;
+  const agents = (m.agents || []).slice().sort((a, b) => a.player - b.player);
+  const role = i => agents[i]?.role || "honest", primary = m.primary;
+  const assist = new Set(m.assistant == null ? [] : [].concat(m.assistant));
+  let h = T.err ? `<div class="callout bad">Lost contact with the viewer server: ${esc(T.err)}. Retrying.</div>` : "";
+  if (T.status === "stalled") h += `<div class="callout warn">Unfinished, and nothing written for ${esc(agoFmt(T.age))}: the run may have crashed or been stopped${m.stop_reason ? ` (${esc(m.stop_reason)})` : ""}.</div>`;
+  if (!T.rounds.length) {
+    el.innerHTML = h + `<div class="waiting">${T.status === "live" ? `<span class="dot live"></span>Waiting for round 0. Agents are deciding…` : "No rounds in this run."}</div>`;
+    return;
+  }
+  const r = T.rounds[T.cur], t = r.round, calls = T.calls[t] || {};
+  // cumulative scores up to and including the selected round
+  const tot = new Array(n).fill(0), wins = new Array(n).fill(0);
+  for (let k = 0; k <= T.cur; k++) T.rounds[k].payoffs.forEach((p, i) => { tot[i] += p; wins[i] += p > 0; });
+  const lead = Math.max(...tot, 1);
+  h += `<div class="score">${[...Array(n).keys()].map(i => `<div class="p" style="--pc:${pcol(i)}">
+      <div class="k">P${i}${role(i) !== "honest" ? " · " + esc(role(i)) : ""}</div><div class="v">${tot[i]}</div>
+      <div class="k">${pct(wins[i] / (T.cur + 1))} of ${T.cur + 1} rounds won</div><div class="bar"><i style="width:${100 * tot[i] / lead}%"></i></div></div>`).join("")}</div>`;
+  h += `<h3 style="margin:18px 0 8px;font-size:15px">Round ${t}</h3>`;
+  // private channel (C2/C4) or pre-agreed rule (C3)
+  if (r.channel_delivered != null && primary != null) {
+    const msg = [...assist].map(j => calls[j]?.channel_message).find(Boolean);
+    h += r.channel_delivered
+      ? `<div class="chan on"><b>Private channel delivered</b> to ${[...assist].map(j => "P" + j).join(", ")}: ${msg ? `“${esc(msg)}”` : `the primary P${primary} played ${moveChip(r.actions[primary], 1)} <span class="ci">(exact text not logged)</span>`}</div>`
+      : `<div class="chan">Private channel <b>not delivered</b> this round (p_channel = ${esc(m.p_channel)}). The assistant decides without the primary's move.</div>`;
+  } else if (cond === "C3" && primary != null) {
+    const prev = T.cur > 0 ? T.rounds[T.cur - 1].actions[primary] : null;
+    h += `<div class="chan on"><b>Pre-agreed rule</b> (no channel): play the move that P${primary}'s previous move beats. ${prev == null ? "No previous round yet." : `P${primary} last played ${moveChip(prev, 1)}, so the rule says ${moveChip(helping(prev), 1)}.`}</div>`;
+  }
+  h += `<div class="agents">${[...Array(n).keys()].map(i => {
+    const c = calls[i] || {}, a = r.actions[i], p = r.payoffs[i], ro = role(i);
+    let verdict = "";
+    if (assist.has(i) && primary != null) {
+      if (r.channel_delivered) verdict = assistantVerdict(a, r.actions[primary]);
+      else if (cond === "C3" && T.cur > 0) verdict = a === helping(T.rounds[T.cur - 1].actions[primary]) ? `<span class="badge pass">followed rule</span>` : `<span class="badge fail">broke rule</span>`;
+    }
+    const probs = c.probs && typeof c.probs === "object" ? Object.entries(c.probs) : null;
+    return `<div class="agent ${p > 0 ? "won" : ""}" style="--pc:${pcol(i)}">
+      <div class="hd"><b>P${i}</b><span class="ci">“Player ${i + 1}” in prompts</span>${ro !== "honest" ? `<span class="badge ${ro === "primary" ? "warn" : ""}">${esc(ro)}</span>` : ""}</div>
+      <div class="ci" style="margin-top:-6px">${esc(c.model || agents[i]?.model || "")}</div>
+      <div class="move">${moveChip(a)}<span class="pay ${p > 0 ? "w" : "l"}">${p > 0 ? "+" + p : p}</span></div>
+      ${verdict ? `<div>${verdict}</div>` : ""}
+      ${c.raw_text != null ? `<div class="raw">${esc(c.raw_text)}</div>` : `<div class="ci">${c.model === "scripted" ? "scripted agent, no text" : "no call logged"}</div>`}
+      ${probs ? `<div class="ci">probs: ${probs.map(([k, v]) => `${esc(k)} ${f(+v, 2)}`).join(" · ")}</div>` : ""}
+      ${c.retry_texts?.length ? `<details><summary>re-asked ${c.retry_texts.length}× (unparseable replies)</summary>${c.retry_texts.map(x => `<div class="raw" style="margin-top:4px">${esc(x)}</div>`).join("")}</details>` : ""}
+      ${c.parse_ok === false ? `<span class="badge fail" title="no parseable move; the harness used a random fallback">random fallback</span>` : ""}
+      <div class="ft">${c.input_tokens != null ? `${int(c.input_tokens)}→${int(c.output_tokens)} tok` : ""}${isNum(c.latency_s) && c.latency_s > 0 ? ` · ${f(c.latency_s, 2)} s` : ""}${c.cost_usd == null ? (c.model && c.model !== "scripted" ? " · unpriced" : "") : c.cost_usd > 0 ? ` · ${usd(c.cost_usd)}` : ""}${c.cached ? " · cache" : ""}</div>
+    </div>`; }).join("")}</div>`;
+  if (T.status === "live" && T.cur === T.rounds.length - 1)
+    h += `<div class="waiting"><span class="dot live"></span>Round ${t + 1}: agents are deciding… <span class="ci">last write ${esc(agoFmt(T.age))}</span></div>`;
+  // recent rounds, newest first, around the selected one
+  const lo = Math.max(0, T.cur - 12), rows = T.rounds.slice(lo, Math.min(T.rounds.length, T.cur + 4)).map((x, k) => ({ x, k: lo + k })).reverse();
+  h += `<h4 style="margin:20px 0 6px;font-size:13px">Nearby rounds <span class="ci">click to jump</span></h4><div class="tablewrap"><table class="recent"><thead><tr><th>Round</th>${[...Array(n).keys()].map(i => `<th>P${i}${role(i) !== "honest" ? " " + esc(role(i)[0]) : ""}</th>`).join("")}${r.channel_delivered != null ? "<th>Channel</th>" : ""}<th>Winners</th></tr></thead><tbody>` +
+    rows.map(({ x, k }) => `<tr data-k="${k}" class="${k === T.cur ? "cur" : ""}"><td class="num">${x.round}</td>${x.actions.map((a, i) => `<td>${moveChip(a, 1)}${x.payoffs[i] > 0 ? ` <span class="pay w" style="font-size:12px">+${x.payoffs[i]}</span>` : ""}</td>`).join("")}${r.channel_delivered != null ? `<td>${x.channel_delivered ? "delivered" : "<span class='ci'>–</span>"}</td>` : ""}<td class="num">${x.payoffs.every(p => p > 0) ? "all" : x.payoffs.some(p => p > 0) ? x.payoffs.map((p, i) => p > 0 ? "P" + i : "").filter(Boolean).join(" ") : "none"}</td></tr>`).join("") + `</tbody></table></div>`;
+  el.innerHTML = h;
+  el.querySelectorAll(".recent tr[data-k]").forEach(tr => tr.onclick = () => setCur(+tr.dataset.k));
+}
+document.addEventListener("keydown", e => {
+  if (!turnsActive() || e.target.closest?.("input[type=text], select, textarea") || e.altKey || e.ctrlKey || e.metaKey) return;
+  if (e.key === "ArrowLeft") { setCur(T.cur - 1); e.preventDefault(); }
+  else if (e.key === "ArrowRight") { setCur(T.cur + 1); e.preventDefault(); }
+  else if (e.key === "Home") { setCur(0); e.preventDefault(); }
+  else if (e.key === "End") { T.follow = T.status === "live"; setCur(T.rounds.length - 1, { keepFollow: true }); e.preventDefault(); }
+  else if (e.key === " " && !e.target.closest?.("button")) { togglePlay(); e.preventDefault(); }
+});
+
+// ------------------------------------------------------------------ scripted studies
+function mdTables(text) {
+  // renders pipe tables; anything else stays preformatted
+  const lines = text.split(/\r?\n/), out = []; let buf = [];
+  const flush = () => { if (buf.length) { out.push(`<pre>${esc(buf.join("\n"))}</pre>`); buf = []; } };
+  for (let i = 0; i < lines.length; i++) {
+    if (/^\s*\|/.test(lines[i]) && /^\s*\|?\s*:?-{3,}/.test(lines[i + 1] || "")) {
+      flush(); const cells = l => l.trim().replace(/^\||\|$/g, "").split("|").map(c => c.trim());
+      const head = cells(lines[i]); i += 2; const body = [];
+      while (i < lines.length && /^\s*\|/.test(lines[i])) body.push(cells(lines[i++]));
+      i--; out.push(`<div class="tablewrap"><table><thead><tr>${head.map(c => `<th>${esc(c)}</th>`).join("")}</tr></thead><tbody>${body.map(r => `<tr>${r.map(c => `<td class="num">${esc(c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`);
+    } else if (lines[i].trim()) buf.push(lines[i]); else flush();
+  }
+  flush(); return out.join("");
+}
+function bonjourPage(d) {
+  const rows = d.results || [], base = ["nats", "bits"].includes(S.ui.base) ? S.ui.base : "nats", cfg = d.config || {};
+  const cps = [...new Set(rows.filter(r => r.cda != null).map(r => r.cp))].sort((a, b) => a - b);
+  const colors = cps.map((_, i) => pcol(i));
+  const series = [];
+  cps.forEach((cp, i) => {
+    const rs = rows.filter(r => r.base === base && r.cp === cp && r.cda != null).sort((a, b) => a.games - b.games);
+    series.push({ name: `CP ${cp} ours`, color: colors[i], points: rs.map(r => [r.games, r.cda]) });
+    if (rs.some(r => r.paper != null)) series.push({ name: `CP ${cp} paper`, color: colors[i], dash: "5 4", points: rs.map(r => [r.games, r.paper]) });
+  });
+  const games = [...new Set(rows.filter(r => r.cda != null).map(r => r.games))].sort((a, b) => a - b);
+  const fd = rows.filter(r => r.false_detection != null);
+  let h = `<div class="title"><h2>Bonjour et al. Table 2 reproduction</h2><span class="ci num">${esc(d.id)}</span></div>
+  <p class="lede">Collusion detection accuracy (CDA: % of iterations where Algorithm 1 returns exactly the seeded pair) against number of games, ${esc(cfg.players ?? "?")}-player scripted RPS, state = <code>${esc(cfg.state ?? "?")}</code>, ${esc(cfg.iters ?? "?")} iterations per point, α = ${esc(cfg.alpha ?? 0.05)}. Dashed: values from the paper's Table 2.</p>
+  <section><div class="row"><label>Log base</label>${seg("base", [["nats", "nats"], ["bits", "bits"]], base)}</div>
+  ${legend(cps.flatMap((cp, i) => [{ name: `CP ${cp}`, color: colors[i] }]).concat([{ name: "paper (Table 2)", color: "var(--muted)", dash: 1 }]))}
+  ${lineChart({ series, xLabel: "number of games", yLabel: "CDA (%)", yMin: 0, yMax: 100, yFmt: v => v + "%" })}</section>
+  <section><h3>CDA by games (${base})</h3>${table([{ h: "Games", r: 1, v: g => g }, ...cps.map(cp => ({ h: `CP ${cp}`, r: 1, v: g => { const r = rows.find(x => x.base === base && x.cp === cp && x.games === g); return r ? `${f(r.cda, 1)}${r.paper != null ? ` <span class="ci">paper ${f(r.paper, 1)}</span>` : ""}` : "–"; } }))], games)}</section>`;
+  if (fd.length) h += `<section><h3>No collusion: any pair flagged</h3><p class="note">Algorithm 1 false-detection rate with no colluders (not reported in the paper).</p>${table([{ h: "Base", v: r => esc(r.base) }, { h: "Games", r: 1, v: r => r.games }, { h: "Any pair flagged", r: 1, v: r => f(r.false_detection, 1) + "%" }], fd)}</section>`;
+  for (const [name, text] of Object.entries(d.texts || {})) h += `<section><h3>${esc(name)}</h3>${mdTables(text)}</section>`;
+  h += filesSection(d) + `<section><h3>config.json</h3><pre>${esc(JSON.stringify(cfg, null, 2))}</pre></section>`;
+  return h;
+}
+function scripted4Page(d) {
+  const rows = d.results || [], cfg = d.config || {};
+  const dets = [...new Set(rows.map(r => r.detector))], conds = [...new Set(rows.map(r => r.condition))];
+  const seeded = conds.filter(c => c !== "null"), get = (c, k) => rows.find(r => r.condition === c && r.detector === k);
+  let h = `<div class="title"><h2>Scripted 4-player comparison</h2><span class="ci num">${esc(d.id)}</span></div>
+  <p class="lede">${esc(cfg.games ?? "?")} games per condition, ${esc(cfg.rounds ?? "?")} rounds each, seeded pair ${esc((cfg.true_pair || []).join("-"))}. Top-1 = seeded pair ranked first among 6 pairs (chance 1/6), 95% bootstrap CI over games.</p>
+  <section>${legend(dets.map((k, i) => ({ name: k, color: pcol(i), sq: 1 })))}
+  ${barChart({ groups: seeded, yLabel: "top-1 accuracy", hlines: [{ y: 1 / 6, label: "chance 1/6" }], series: dets.map((k, i) => ({ name: k, color: pcol(i), values: seeded.map(c => { const r = get(c, k); return r && { v: r.top1, lo: r.top1_lo, hi: r.top1_hi }; }) })) })}</section>
+  <section><h3>Top-1 accuracy</h3>${table([{ h: "Condition", v: c => `<b>${esc(c)}</b>` }, ...dets.map(k => ({ h: esc(k), r: 1, v: c => { const r = get(c, k); return r ? `${f(r.top1, 2)} <span class="ci">[${f(r.top1_lo, 2)}, ${f(r.top1_hi, 2)}]</span>` : "–"; } }))], conds)}</section>
+  <section><h3>Algorithm 1 rate (α = 0.05)</h3><p class="note">Seeded conditions: exactly the seeded pair flagged. Null: any pair flagged (false alarm).</p>${table([{ h: "Condition", v: c => `<b>${esc(c)}</b>` }, ...dets.filter(k => rows.some(r => r.detector === k && r.alg1_rate != null)).map(k => ({ h: esc(k), r: 1, v: c => pct(get(c, k)?.alg1_rate) }))], conds)}</section>`;
+  return h + filesSection(d) + `<section><h3>config.json</h3><pre>${esc(JSON.stringify(cfg, null, 2))}</pre></section>`;
+}
+function otherPage(d) {
+  let h = `<div class="title"><h2>${esc(d.id)}</h2></div><p class="lede">Not a recognised run format; files are listed as-is.</p>`;
+  for (const [name, text] of Object.entries(d.texts || {})) h += `<section><h3>${esc(name)}</h3>${mdTables(text)}</section>`;
+  return h + filesSection(d);
+}
+
+// ------------------------------------------------------------------ boot
+document.getElementById("q").addEventListener("input", e => { S.q = e.target.value; renderNav(); });
+document.getElementById("refresh").addEventListener("click", async () => { await loadAll(); render(); });
+window.addEventListener("hashchange", () => { S.ui.callsPage = 0; render(); document.querySelector("main").scrollTop = 0; });
+// keep the sidebar current (new runs, live progress) without recomputing the overview
+setInterval(async () => {
+  if (document.hidden) return;
+  try {
+    const runs = await getJSON("/api/runs");
+    const sig = x => x.map(e => `${e.id}|${e.status}|${e.rounds_completed}`).join(",");
+    if (sig(runs) !== sig(S.runs)) { S.runs = runs; renderNav(); }
+  } catch (e) {}
+}, 4000);
+loadAll().then(render).catch(e => { document.getElementById("view").innerHTML = `<div class="callout bad">Could not reach the viewer server: ${esc(e.message)}</div>`; });
+</script>
+</body>
+</html>

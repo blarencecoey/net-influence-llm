@@ -7,6 +7,8 @@ tags: [preregistration, methods]
 
 > [claude] Template, 2026-10-24. The choices are Clarence's. Lines marked `[claude suggestion]` are defaults wired into the code and configs, with the reason; replace or confirm each, then commit this file **before** running any non-mock game. The commit timestamp is the pre-registration record. Any later change goes in the deviations table at the bottom with a reason.
 
+> [claude] 2026-10-24, merge into `sprint/llm-harness-local`: this template was written for the merged-in harness, whose code was removed. Its commands and `[claude suggestion]` defaults (e.g. window 5) no longer match the code. Local equivalents: `scripts/run_llm_rps.py --config configs/<c>.yaml` (runner, C2 first), `scripts/analyze_runs.py` (analysis), `netinf.judge` (LLM judge); defaults live in `configs/base.yaml` (e.g. `history_window: 10`, 200 rounds, seeds 0–4). Four Llama 3.3 70B C2 runs (three 20-round smokes, one 200-round, prompts v1–v3, ~$0.06) were made before this file was frozen; see `notes/lab-log.md`. If you use this file, record those runs in the deviations table.
+
 ## Fixed before running
 
 | Item | Decision | [claude suggestion] and why |

@@ -19,7 +19,7 @@ No estimator, environment or agent code was written before the sprint. All funct
 
 Everything committed on or after Oct 23, 2026. The git history is the record; the last pre-sprint commit is tagged `pre-sprint`.
 
-> [claude] As of 2026-10-24 the `pre-sprint` tag did not exist on the remote. The last pre-sprint commit is `643b0b2` (2026-10-21). Tag it: `git tag pre-sprint 643b0b2 && git push origin pre-sprint`.
+> [claude] Tagged 2026-10-24: annotated tag `pre-sprint` → `643b0b2` (2026-10-21, the last commit before the first sprint commit `039e94f` on 2026-10-24), pushed to origin.
 
 - 2026-10-24: detector, scripted RPS, correlation baseline, tests, Table 2 reproduction and scripted 4-agent comparison scripts (with Claude as coding colleague).
 

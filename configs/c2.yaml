@@ -1,0 +1,4 @@
+# C2: seeded pair with a private per-round channel, delivered every round. Positive control: run first.
+base: base.yaml
+condition: C2
+p_channel: 1.0

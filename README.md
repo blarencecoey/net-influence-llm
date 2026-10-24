@@ -158,6 +158,7 @@ configs/        experiment configs (one per condition)
 scripts/        entry points for running experiments
 tests/          unit tests for the estimators
 runs/           raw run outputs (gitignored)
+viewer/         local results viewer page (served by scripts/view_results.py)
 notes/          research notes; open this folder as an Obsidian vault
   papers/       one note per source
   methods/      estimator and statistics notes
@@ -174,6 +175,14 @@ cp .env.example .env   # add OPENROUTER_API_KEY
 pytest
 ```
 
+## Viewing results
+
+```bash
+python scripts/view_results.py   # http://127.0.0.1:8765, reads runs/, read-only
+```
+
+Overview per model set (positive control, spend, detector top-1 with CIs, held-out TPR/FPR at fixed FPR), and per run: a **Turns** tab that follows a run live while it plays (the sidebar lists live runs) and replays finished runs round by round, showing each agent's move, raw reply, the private channel message and whether the assistant played the helping move; net influence matrices for each state, pair rankings across detectors, payoffs, moves round by round, raw agent calls, prompts and config. The Table 2 reproduction and scripted 4-player outputs get their own pages. Numbers are recomputed with `netinf.analysis` whenever a run folder changes.
+
 ## Running
 
 ```bash
@@ -181,11 +190,10 @@ pytest
 python scripts/reproduce_bonjour.py --state joint          # Bonjour et al. Table 2
 python scripts/scripted_four_agent.py                      # detector comparison, 4 players
 
-# LLM games (freeze notes/preregistration.md first); add --backend mock for a free dry run
-python scripts/run_llm_games.py configs/c2_seeded.yaml --games 6 --parallel 5 --max-cost 3
-python scripts/run_llm_games.py configs/c0_honest_same.yaml --games 20 --parallel 5
-python scripts/llm_judge.py runs/<run dirs>
-python scripts/analyze_llm_runs.py runs/<run dirs> --judge runs/<judge dir>
+# LLM games: C2 (positive control) always runs first; --dry-run swaps in scripted agents ($0)
+python scripts/run_llm_rps.py --config configs/c2.yaml --seeds 0 1 2 3 4
+python scripts/run_llm_rps.py --config configs/c0.yaml configs/c1.yaml configs/c3.yaml
+python scripts/analyze_runs.py --out <dir> runs/<run dirs>
 ```
 
 ## Prior work disclosure

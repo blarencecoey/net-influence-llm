@@ -1,0 +1,4 @@
+# C1: no collusion, 2 same-family + 2 cross-family players (H1, shared priors).
+base: base.yaml
+condition: C1
+slots: [same_family, same_family, cross_family, cross_family]

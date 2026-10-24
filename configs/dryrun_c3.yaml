@@ -1,0 +1,4 @@
+# Dry run of c3.yaml with scripted agents ($0, no API, seconds).
+base: c3.yaml
+provider: scripted
+seeds: [0, 1, 2]
