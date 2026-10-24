@@ -7,7 +7,6 @@ from netinf import detector as d
 from netinf.baselines import correlation_scores, rank_of_pair
 from netinf.envs import rps
 
-
 # ------------------------------------------------------------------ conditional MI
 
 

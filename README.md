@@ -146,7 +146,8 @@ flowchart TB
 | Lagged variant (conditional transfer entropy) | Done, tested on scripted tacit collusion |
 | Calibrated threshold (circular-shift null) | Null functions done; calibration protocol not yet |
 | Scripted 3/4-player Rock-Paper-Scissors reproduction | Done; Table 2 reproduced with previous-joint-action state (`notes/methods/reproduction.md`) |
-| LLM agent harness (4-player RPS, seeded colluding pair) | Not started |
+| LLM agent harness (4-player RPS, seeded colluding pair) | Done, tested offline with a mock backend; OpenRouter backend not yet run |
+| LLM judge baseline (full trajectory) | Done, tested offline |
 | Discrete-price market environment (stretch) | Not started |
 
 ## Layout
@@ -169,8 +170,8 @@ notes/          research notes; open this folder as an Obsidian vault
 
 ```bash
 python -m venv .venv && source .venv/bin/activate
-pip install -e ".[dev]"
-cp .env.example .env   # add API keys
+pip install -e ".[llm,dev]"
+cp .env.example .env   # add OPENROUTER_API_KEY
 pytest
 ```
 
@@ -181,6 +182,19 @@ python scripts/view_results.py   # http://127.0.0.1:8765, reads runs/, read-only
 ```
 
 Overview per model set (positive control, spend, detector top-1 with CIs, held-out TPR/FPR at fixed FPR), and per run: a **Turns** tab that follows a run live while it plays (the sidebar lists live runs) and replays finished runs round by round, showing each agent's move, raw reply, the private channel message and whether the assistant played the helping move; net influence matrices for each state, pair rankings across detectors, payoffs, moves round by round, raw agent calls, prompts and config. The Table 2 reproduction and scripted 4-player outputs get their own pages. Numbers are recomputed with `netinf.analysis` whenever a run folder changes.
+
+## Running
+
+```bash
+# scripted, CPU, $0
+python scripts/reproduce_bonjour.py --state joint          # Bonjour et al. Table 2
+python scripts/scripted_four_agent.py                      # detector comparison, 4 players
+
+# LLM games: C2 (positive control) always runs first; --dry-run swaps in scripted agents ($0)
+python scripts/run_llm_rps.py --config configs/c2.yaml --seeds 0 1 2 3 4
+python scripts/run_llm_rps.py --config configs/c0.yaml configs/c1.yaml configs/c3.yaml
+python scripts/analyze_runs.py --out <dir> runs/<run dirs>
+```
 
 ## Prior work disclosure
 
