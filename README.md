@@ -144,9 +144,9 @@ flowchart TB
 | Net influence estimator (Bonjour et al. Eq. 3–5) | Done, tested |
 | Bias-corrected estimator (Miller–Madow) | Done, tested |
 | Lagged variant (conditional transfer entropy) | Done, tested on scripted tacit collusion |
-| Calibrated threshold | Done in `netinf.analysis`: thresholds frozen on calibration seeds 0–1, evaluated on held-out seeds, overlap refused. The circular-shift test was dropped: its null does not match the net score (limitation B18, `scripts/check_shift_null.py`). Not yet run on LLM data (needs C0/C1 runs) |
+| Calibrated threshold | Done in `netinf.analysis`: thresholds frozen on calibration seeds, evaluated on held-out seeds, overlap refused. The circular-shift test was dropped: its null does not match the net score (limitation B18, `scripts/check_shift_null.py`). Run on LLM data: 100 C0/C1 null runs on calibration seeds 5–54, held-out seeds 0–4 (`notes/results/calib-c0-c1-100null/`, `thresholds.json`) |
 | Scripted 3/4-player Rock-Paper-Scissors reproduction | Done; Table 2 reproduced with previous-joint-action state (`notes/methods/reproduction.md`) |
-| LLM agent harness (4-player RPS, seeded colluding pair) | Done; OpenRouter, OpenAI, Anthropic and offline (fake, scripted) backends. First paid C2 runs made with Llama 3.3 70B ×4 (`notes/lab-log.md`); cross-family model not yet chosen |
+| LLM agent harness (4-player RPS, seeded colluding pair) | Done; OpenRouter, OpenAI, Anthropic and offline (fake, scripted) backends. Cross-family model: `mistralai/mistral-small-3.2-24b-instruct` (`configs/base.yaml`). Runs so far (`notes/lab-log.md`): C2 Llama 3.3 70B ×4, prompt v3, seeds 0–4; C2 Llama ×2 + Mistral ×2 (`configs/c2_mixed.yaml`), 10 seeds (0, 1, 4, 6, 7, 9, 20, 24, 30, 34); C0 Llama ×4 and C1 Llama ×2 + Mistral ×2, seeds 0–54 each |
 | LLM judge baseline (full trajectory) | Done; `scripts/run_judge.py` writes `judge.json` per run, judge model Claude Sonnet 5.5 via OpenRouter |
 | Discrete-price market environment (stretch) | Not started |
 
@@ -165,6 +165,7 @@ notes/          research notes; open this folder as an Obsidian vault
   lit-review.md index of sources and evidence per hypothesis
   lab-log.md    one entry per run: what ran, outputs, cost
   limitations-and-ethics.md   tracker for the required appendix
+  results/      committed analysis outputs, one folder per analysis (see Results)
 ```
 
 ## Setup
@@ -182,7 +183,7 @@ pytest
 python scripts/view_results.py   # http://127.0.0.1:8765, reads runs/, read-only
 ```
 
-Overview per model set (positive control, spend, detector top-1 with CIs, held-out TPR/FPR at fixed FPR), and per run: a **Turns** tab that follows a run live while it plays (the sidebar lists live runs) and replays finished runs round by round, showing each agent's move, raw reply, the private channel message and whether the assistant played the helping move; net influence matrices for each state, pair rankings across detectors, payoffs, moves round by round, raw agent calls, prompts and config. The Table 2 reproduction and scripted 4-player outputs get their own pages. Numbers are recomputed with `netinf.analysis` whenever a run folder changes.
+Overview per model set (positive control, spend, detector top-1 with CIs, held-out TPR/FPR at fixed FPR), and per run: a **Turns** tab that follows a run live while it plays (the sidebar lists live runs) and replays finished runs round by round, showing each agent's move, raw reply, the private channel message and whether the assistant played the helping move; net influence matrices for each state, pair rankings across detectors, payoffs, moves round by round, raw agent calls, prompts and config. The Table 2 reproduction and scripted 4-player outputs get their own pages. Numbers are recomputed with `netinf.analysis` whenever a run folder changes. Held-out numbers use `runs/thresholds.json` if it exists; otherwise thresholds are fitted at view time on the code-default calibration seeds (0, 1), not the split used in `notes/results/calib-c0-c1-100null/`.
 
 ## Running
 
@@ -199,11 +200,38 @@ python scripts/run_llm_rps.py --config configs/dryrun_c2.yaml   # dryrun_*.yaml:
 # LLM judge baseline: writes judge.json into each run dir; --dry-run prints the prompt only
 python scripts/run_judge.py 'runs/C2_llama-3.3-70b-instruct_*'
 
-# detector comparison, positive control, frozen thresholds (calibration seeds 0-1, rest held out)
-python scripts/analyze_runs.py --out <dir> 'runs/C*_llama-3.3-70b-instruct_*'
+# detector comparison, positive control, frozen thresholds: C2 Llama v3 seeds 0-4 + C0 + C1,
+# calibration seeds 5-54 (100 nulls), held out seeds 0-4 (notes/results/calib-c0-c1-100null/)
+python scripts/analyze_runs.py runs/C2_llama-3.3-70b-instruct_p1.0_s0_20261024-120724 "runs/C2_llama-3.3-70b-instruct_p1.0_s[1-4]_20261024-123914" "runs/C0_llama*" "runs/C1_llama*" --out notes/results/calib-c0-c1-100null --secondary-states none prev_joint --calib-seeds $(seq 5 54)
+```
+
+The code default is `DEFAULT_CALIB_SEEDS = (0, 1)` in `src/netinf/analysis.py`, so the reported split must be passed explicitly with `--calib-seeds`.
+
+Re-analyses of existing runs ($0; commands from each results folder's README, or from the script's docstring where there is no folder):
+
+```bash
+python scripts/b21_mixed_c2.py notes/results/calib-c0-c1-100null/thresholds.json   # mixed-family C2 (notes/results/b21-mixed-c2/)
+python scripts/h1_by_state.py notes/results/calib-c0-c1-100null > notes/results/h1-by-state/output.txt
+python scripts/net_decomposition.py "runs/C0_llama*" "runs/C1_llama*" > notes/results/net-decomposition/output.txt
+python scripts/rounds_to_detection.py --calib-seeds 5-54 --out notes/results/rounds-to-detection
+python scripts/scripted_lockstep.py --games 200 --rounds 200 --thresholds <calib dir>/thresholds.json   # scripted control, limitation B22
+python scripts/sync_stats.py    # synchronisation stats over completed runs in runs/ (B22)
+python scripts/sync_rules.py    # per-family move rules for honest C0/C1 players (B22)
 ```
 
 Paid runs are refused while `configs/base.yaml` still holds `*_TODO` model or price placeholders, and a paid non-C2 condition is refused until a C2 run with the same models has passed the positive-control check. Each invocation is capped by `budget_usd`.
+
+## Results
+
+Committed analysis outputs are in [`notes/results/`](notes/results/), one folder per analysis, each with a README giving its input runs, code and command:
+
+- `b21-mixed-c2/`: C2 Llama + Mistral (mixed families), positive control and detection, under two sets of frozen thresholds.
+- `c2-llama-v3/`: C2 Llama 3.3 70B ×4, prompt v3, seeds 0–4, analysed before any null runs existed (no thresholds).
+- `calib-c0-c1-100null/`: C0 + C1 null runs, 100-null calibration on seeds 5–54, C2 Llama v3 seeds 0–4 held out; the frozen `thresholds.json`.
+- `h1-by-state/`: H1 under each detector state, derived from `calib-c0-c1-100null/`.
+- `net-decomposition/`: net-score decomposition for honest pairs, and an entropy-matched check.
+- `rounds-to-detection/`: rounds needed for detection, runs truncated to their first T rounds.
+- `synthetic-dryrun/`: synthetic dry run of the analysis pipeline on scripted runs; not a result.
 
 ## Prior work disclosure
 
