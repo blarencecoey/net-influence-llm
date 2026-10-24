@@ -43,6 +43,7 @@ Under conditional independence with iid rounds, 2N · γ̂ (nats) ~ χ² with df
 
 - **Within-state permutation** (discrete analogue of [[runge-2018]]'s local permutation): shuffle a_j among rounds with the same s. Preserves p(a_j | s) exactly; null of γ(i; j) = 0. Best for same-round CMI.
 - **Circular shift** of agent j's series (plan, H4; cf. [[riedl-2026]] time-shift surrogates): preserves j's autocorrelation; needed for the lagged variant.
+  > [claude] 2026-10-24: valid for γ(i; j) = 0, but not for the *net* pair score. Shifting j makes j independent of every agent, while i's dependence on third agents stays in Γ(j; i), so the null sits below zero and honest pairs are rejected under shared priors (per-pair P(p ≤ 0.05) = 0.57 for netinf, 0.22 for lagged_netinf, in synthetic checks). Removed from the analysis pipeline; see limitation B18 and `scripts/check_shift_null.py`.
 - **Honest-run calibration** ([[tailor-2025]]): thresholds from C0 runs of the same model mix. Only option that captures shared-prior dependence ([[xu-2026]]): permutation nulls treat shared priors as signal, honest-run nulls treat them as noise. This difference *is* H1 vs H4 — report both.
 
 ## 4. Multiple testing

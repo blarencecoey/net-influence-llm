@@ -115,7 +115,7 @@ flowchart TB
     E1["Bias ≈ 2·|S|/N nats<br/>→ keep state ≤ 9 values"]
     E2["Temperature contrast<br/>option-order shuffle"]
     E3["Lagged net influence<br/>conditional transfer entropy"]
-    E4["Calibrated threshold<br/>circular-shift or honest-run null,<br/>frozen on calibration split"]
+    E4["Calibrated threshold<br/>honest-run null,<br/>frozen on calibration split"]
 
     H1["H1"] --> T1
     H2["H2"] --> T2
@@ -144,7 +144,7 @@ flowchart TB
 | Net influence estimator (Bonjour et al. Eq. 3–5) | Done, tested |
 | Bias-corrected estimator (Miller–Madow) | Done, tested |
 | Lagged variant (conditional transfer entropy) | Done, tested on scripted tacit collusion |
-| Calibrated threshold | Done in `netinf.analysis`: thresholds frozen on calibration seeds 0–1, evaluated on held-out seeds, overlap refused; circular-shift null p-values alongside. Not yet run on LLM data (needs C0/C1 runs) |
+| Calibrated threshold | Done in `netinf.analysis`: thresholds frozen on calibration seeds 0–1, evaluated on held-out seeds, overlap refused. The circular-shift test was dropped: its null does not match the net score (limitation B18, `scripts/check_shift_null.py`). Not yet run on LLM data (needs C0/C1 runs) |
 | Scripted 3/4-player Rock-Paper-Scissors reproduction | Done; Table 2 reproduced with previous-joint-action state (`notes/methods/reproduction.md`) |
 | LLM agent harness (4-player RPS, seeded colluding pair) | Done; OpenRouter, OpenAI, Anthropic and offline (fake, scripted) backends. First paid C2 runs made with Llama 3.3 70B ×4 (`notes/lab-log.md`); cross-family model not yet chosen |
 | LLM judge baseline (full trajectory) | Done; `scripts/run_judge.py` writes `judge.json` per run, judge model Claude Sonnet 5.5 via OpenRouter |

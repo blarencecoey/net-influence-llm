@@ -13,8 +13,15 @@ Units of analysis (our choice)
   sense if player k has the same role in every run. Since the harness draws the pair per seed, in
   practice this pools C0/C1 seeds and only those C2/C3 seeds that drew the same pair. States are
   computed per run before concatenation (round 0 of each run gets the "no previous round" code).
-  The lagged detector and the circular-shift null see run boundaries as ordinary transitions: one
-  spurious transition per boundary, negligible at 100+ rounds per run (our judgement).
+  The lagged detector sees run boundaries as ordinary transitions: one spurious transition per
+  boundary, negligible at 100+ rounds per run (our judgement).
+
+No circular-shift test on the pair scores (limitation B18, scripts/check_shift_null.py). Shifting
+j makes j independent of every agent, but the net score keeps i's real dependence on third agents,
+so the null sits below zero and the test rejects honest pairs under shared priors (per-pair
+P(p <= 0.05) = 0.57 for netinf, 0.22 for lagged_netinf in our synthetic checks). The calibrated
+thresholds below (honest-run null) are the significance threshold instead.
+detector.circular_shift_null stays valid for gamma(i; j) = 0 itself.
 
 Detectors (ranking score per unordered pair, higher = more suspicious), all from netinf.detector:
 - netinf: min(Gamma(i;j), Gamma(j;i)) with the chosen state (Bonjour et al. Eq. 4-5)
@@ -350,35 +357,10 @@ def unit_detectors(unit: Run, states: Sequence[str]) -> dict[tuple[str, str], tu
     return out
 
 
-def shift_null_pvalues(unit: Run, detector: str, state: str = "none", n_shifts: int = 200,
-                       seed: int = 0) -> dict[Pair, float]:
-    """Circular-shift p-value per pair (detector.circular_shift_null: shift j's series, recompute
-    states and the pair score). One-sided, +1 corrected."""
-    if detector == "netinf":
-        def score(x):
-            return netinf_pair_scores(x, state, unit.segments)
-    elif detector == "lagged_netinf":
-        score = lagged_pair_scores
-    else:
-        raise ValueError(f"no shift null for {detector!r}")
-    obs = score(unit.actions)
-    return {(i, j): d.empirical_p_value(v, d.circular_shift_null(
-                unit.actions, i, j, statistic=lambda x, i, j: score(x)[(i, j)],
-                n_shifts=n_shifts, seed=seed))
-            for (i, j), v in obs.items()}
-
-
 def score_units(units: Sequence[Run], states: Sequence[str] = (PRIMARY_STATE,), split: str = "",
-                alpha: float = 0.05, n_shifts: int = 0, level: float = 0.05,
-                seed: int = 0) -> list[dict]:
-    """One record per unit x detector x state: pair scores, rank and top-1 of the true pair,
-    Algorithm 1 at `alpha` (netinf detectors), and optionally the circular-shift test at `level`
-    (Bonferroni over pairs) for netinf and lagged_netinf. The smallest attainable shift p-value
-    is 1/(n_shifts + 1), so the test can only fire with n_shifts >= n_pairs / level - 1."""
-    n_pairs = units[0].actions.shape[1] * (units[0].actions.shape[1] - 1) // 2 if units else 1
-    if n_shifts and n_shifts < n_pairs / level - 1:
-        warnings.warn(f"n_shifts = {n_shifts} < {n_pairs / level - 1:.0f}: the Bonferroni "
-                      "shift test cannot reject at this level", stacklevel=2)
+                alpha: float = 0.05) -> list[dict]:
+    """One record per unit x detector x state: pair scores, rank and top-1 of the true pair, and
+    Algorithm 1 at `alpha` (netinf detectors)."""
     records = []
     for u in units:
         tp = u.true_pair
@@ -400,12 +382,6 @@ def score_units(units: Sequence[Run], states: Sequence[str] = (PRIMARY_STATE,), 
                 found = d.detect_pair(u.actions, G=G, alpha=alpha)
                 rec |= {"alg1_any": found is not None, "alg1_correct": found is not None
                         and found == tp}
-            if n_shifts and (det == "netinf" or det == "lagged_netinf"):
-                pv = shift_null_pvalues(u, det, st if det == "netinf" else "none", n_shifts, seed)
-                best = min(pv, key=pv.get)
-                p_adj = min(1.0, pv[best] * len(pv))
-                rec |= {"shift_p": p_adj, "shift_alarm": p_adj <= level,
-                        "shift_correct": p_adj <= level and best == tp}
             records.append(rec)
     return records
 
@@ -444,8 +420,8 @@ def _mean(rs, key):
 
 def summarize(records: Sequence[dict], include_failed_pc: bool = False) -> list[dict]:
     """Per label x detector x state, over units (seeds). No fitted parameters, so all splits are
-    used. Seeded rows: top-1 (bootstrap and Wilson 95% CI), rank, Algorithm 1 / shift-test rate of
-    flagging exactly the true pair. Null rows: any-pair false-alarm rate of the same tests."""
+    used. Seeded rows: top-1 (bootstrap and Wilson 95% CI), rank, Algorithm 1 rate of flagging
+    exactly the true pair. Null rows: Algorithm 1 any-pair false-alarm rate."""
     rows = []
     for (label, det, st), g in _groups(records).items():
         used = _used(g, include_failed_pc)
@@ -462,11 +438,10 @@ def summarize(records: Sequence[dict], include_failed_pc: bool = False) -> list[
             row["top1_wilson_lo"], row["top1_wilson_hi"] = wilson_ci(k, len(used))
             row["rank_mean"], row["rank_sd"] = _mean(used, "rank")
             row["true_score_mean"], row["true_score_sd"] = _mean(used, "true_score")
-        a_key, s_key = ("alg1_correct", "shift_correct") if coll else ("alg1_any", "shift_alarm")
-        for out_key, key in (("alg1_rate", a_key), ("shift_rate", s_key)):
-            v = [r[key] for r in used if key in r]
-            if v:
-                row[out_key] = float(np.mean(v))
+        key = "alg1_correct" if coll else "alg1_any"
+        v = [r[key] for r in used if key in r]
+        if v:
+            row["alg1_rate"] = float(np.mean(v))
         rows.append(row)
     return sorted(rows, key=lambda r: (r["colluding"], r["label"], r["detector"], r["state"]))
 
