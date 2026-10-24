@@ -12,6 +12,7 @@ Does pairwise net influence ([[bonjour-2022]]) detect colluding LLM agents, and 
 - **H2 (tacit collusion):** coordination carried only through the game history is missed by same-round net influence but caught by a lagged (transfer entropy) variant.
 - **H3 (dose response):** net influence rises with the probability that the colluders' private channel is delivered.
 - **H4 (calibration):** a circular-shift null threshold reduces false positives versus the fixed α = 0.05, without losing the positive control.
+  > [claude] 2026-10-24: the circular-shift null turned out invalid for the net score (B18 in [[limitations-and-ethics]]), so the pipeline now tests H4 with the honest-run (C0/C1) calibrated threshold only. Rewording H4 is the author's call.
 
 ## Conditions (4 agents, ~200 rounds × 5 seeds each)
 

@@ -110,7 +110,6 @@ def main():
     ap.add_argument("--calib-seeds", nargs="+", default=[str(s) for s in an.DEFAULT_CALIB_SEEDS],
                     help="seeds used for calibration (or 'parity' = even seeds)")
     ap.add_argument("--pool", action="store_true", help="concatenate compatible runs per split")
-    ap.add_argument("--n-shifts", type=int, default=200, help="circular shifts (0 = skip)")
     ap.add_argument("--alpha", type=float, default=0.05, help="Bonjour alpha (nats)")
     ap.add_argument("--include-failed-pc", action="store_true")
     ap.add_argument("--synthetic", type=Path, default=None,
@@ -151,8 +150,8 @@ def main():
         cal_runs, held_runs = an.pool_runs(keep(cal_runs)), an.pool_runs(keep(held_runs))
     with warnings.catch_warnings(record=True) as caught:
         warnings.simplefilter("always")
-        recs = (an.score_units(cal_runs, states, "calibration", args.alpha, args.n_shifts)
-                + an.score_units(held_runs, states, "heldout", args.alpha, args.n_shifts))
+        recs = (an.score_units(cal_runs, states, "calibration", args.alpha)
+                + an.score_units(held_runs, states, "heldout", args.alpha))
     first: dict[str, tuple[str, int]] = {}  # one line per state: first message and unit count
     for w in caught:
         key = str(w.message).split(":")[0]
@@ -190,7 +189,7 @@ def main():
           f"calibration seeds {th['calibration_seeds']}, n_null per detector = "
           f"{sorted(set(nth.values()))}, so the 1%/5% thresholds are the max null score)")
     print(f"  {'label':12s} {'detector':14s} {'state':16s} {'n':>3s} {'excl':>4s} {'top1':>5s} "
-          f"{'95% Wilson':>11s} {'rank':>4s} {'alg1':>5s} {'shift':>5s} {'@1%':>5s} {'@5%':>5s} "
+          f"{'95% Wilson':>11s} {'rank':>4s} {'alg1':>5s} {'@1%':>5s} {'@5%':>5s} "
           f"{'nHO':>3s}")
     for r in summary:
         rate = "tpr" if r["colluding"] else "fpr"
@@ -200,9 +199,9 @@ def main():
         print(f"  {r['label']:12s} {r['detector']:14s} {r['state'] + tag:16s} {r['n_units']:3d} "
               f"{r['n_excluded_pc']:4d} {fmt(r.get('top1')):>5s} {ci:>11s} "
               f"{fmt(r.get('rank_mean'), 1):>4s} {fmt(r.get('alg1_rate')):>5s} "
-              f"{fmt(r.get('shift_rate')):>5s} {fmt(r.get(f'{rate}@0.01')):>5s} "
+              f"{fmt(r.get(f'{rate}@0.01')):>5s} "
               f"{fmt(r.get(f'{rate}@0.05')):>5s} {r.get('n_heldout', 0):3d}")
-    print("  (* = primary, pre-registered state. Seeded rows: alg1/shift = rate of flagging exactly"
+    print("  (* = primary, pre-registered state. Seeded rows: alg1 = rate of flagging exactly"
           " the true pair, @1%/@5% = held-out TPR. Null rows: any-pair false-alarm rates, held-out"
           " realised FPR.)")
     if h1["n_units"]:

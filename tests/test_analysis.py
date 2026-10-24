@@ -174,13 +174,37 @@ def test_pooling_keeps_pairs_separate(run_root):
     assert (s[np.cumsum([0, *pooled[0].segments[:-1]])] == 0).all()
 
 
-def test_shift_null_and_h1(run_root):
-    c2 = an.load_runs(str(run_root / "C2_*"))[:2]
-    recs = _score(c2, n_shifts=150)  # Bonferroni over 6 pairs needs >= 119 shifts
-    r = next(r for r in recs if r["detector"] == "netinf")
-    assert r["shift_alarm"] and r["shift_correct"]
-    with pytest.warns(UserWarning, match="cannot reject"):
-        an.score_units(c2[:1], ("none",), n_shifts=30)
+def _shared_prior_unit(seed: int, strength: float = 0.4, T: int = 200) -> an.Run:
+    """No collusion: each agent copies a common per-round latent move w.p. `strength`."""
+    rng = np.random.default_rng(seed)
+    latent = rng.integers(0, 3, size=T)
+    a = rng.integers(0, 3, size=(T, 4))
+    follow = rng.random((T, 4)) < strength
+    a[follow] = np.repeat(latent[:, None], 4, axis=1)[follow]
+    return an.Run(f"shared_s{seed}", "C1", seed, a, np.zeros_like(a), pc_passed=None)
+
+
+def test_no_shift_test_in_pipeline(run_root):
+    # B18: the circular-shift null does not match the net score (rejects ~57% of honest pairs at
+    # 5% under a shared prior), so score_units no longer runs it
+    c2 = an.load_runs(str(run_root / "C2_*"))[:1]
+    assert not any(k.startswith("shift") for r in _score(c2) for k in r)
+    with pytest.raises(TypeError):
+        an.score_units(c2, ("none",), n_shifts=150)
+    assert not hasattr(an, "shift_null_pvalues")
+
+
+def test_calibrated_threshold_controls_fpr_under_shared_prior():
+    # what replaces the shift test: thresholds from honest calibration runs keep held-out FPR
+    # near nominal even when all honest agents share a prior
+    cal = _score([_shared_prior_unit(s) for s in range(100)], split="calibration")
+    held = _score([_shared_prior_unit(s) for s in range(100, 300)], split="heldout")
+    rows = an.evaluate(held, an.fit_thresholds(cal))
+    fpr = next(r for r in rows if r["detector"] == "netinf" and r["state"] == "none")["fpr@0.05"]
+    assert fpr <= 0.10
+
+
+def test_h1(run_root):
     c1 = an.load_runs(str(run_root / "C1_*"))
     h1 = an.h1_family_comparison(_score(c1), state="none")
     assert h1["n_units"] == 6

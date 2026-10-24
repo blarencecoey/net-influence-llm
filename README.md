@@ -115,7 +115,7 @@ flowchart TB
     E1["Bias ≈ 2·|S|/N nats<br/>→ keep state ≤ 9 values"]
     E2["Temperature contrast<br/>option-order shuffle"]
     E3["Lagged net influence<br/>conditional transfer entropy"]
-    E4["Calibrated threshold<br/>circular-shift or honest-run null,<br/>frozen on calibration split"]
+    E4["Calibrated threshold<br/>honest-run null,<br/>frozen on calibration split"]
 
     H1["H1"] --> T1
     H2["H2"] --> T2
@@ -144,7 +144,7 @@ flowchart TB
 | Net influence estimator (Bonjour et al. Eq. 3–5) | Done, tested |
 | Bias-corrected estimator (Miller–Madow) | Done, tested |
 | Lagged variant (conditional transfer entropy) | Done, tested on scripted tacit collusion |
-| Calibrated threshold (circular-shift null) | Null functions done; calibration protocol not yet |
+| Calibrated threshold (honest-run null) | Null functions done; calibration protocol not yet. The circular-shift test was dropped: its null does not match the net score (limitation B18, `scripts/check_shift_null.py`) |
 | Scripted 3/4-player Rock-Paper-Scissors reproduction | Done; Table 2 reproduced with previous-joint-action state (`notes/methods/reproduction.md`) |
 | LLM agent harness (4-player RPS, seeded colluding pair) | Done, tested offline with a mock backend; OpenRouter backend not yet run |
 | LLM judge baseline (full trajectory) | Done, tested offline |
