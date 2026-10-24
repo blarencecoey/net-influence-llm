@@ -1,0 +1,61 @@
+{
+ "detector": "netinf",
+ "state": "prev_n_distinct",
+ "condition": "C1",
+ "n_units": 5,
+ "units": [
+  {
+   "unit_id": "C1_s0_scripted",
+   "same_max": -0.005223561272001867,
+   "cross_max": 0.012519729060393732,
+   "same_mean": -0.005223561272001867,
+   "cross_mean": -0.013542929605681975,
+   "top_is_same": false,
+   "chance_same": 0.16666666666666666
+  },
+  {
+   "unit_id": "C1_s1_scripted",
+   "same_max": -0.03133063819330563,
+   "cross_max": 0.006672501255089239,
+   "same_mean": -0.03133063819330563,
+   "cross_mean": -0.017044978572823905,
+   "top_is_same": false,
+   "chance_same": 0.16666666666666666
+  },
+  {
+   "unit_id": "C1_s2_scripted",
+   "same_max": -0.01818514047572483,
+   "cross_max": 0.001742189521170931,
+   "same_mean": -0.01818514047572483,
+   "cross_mean": -0.009789988813126415,
+   "top_is_same": false,
+   "chance_same": 0.16666666666666666
+  },
+  {
+   "unit_id": "C1_s3_scripted",
+   "same_max": -0.025920830431200824,
+   "cross_max": 0.016804717218363012,
+   "same_mean": -0.025920830431200824,
+   "cross_mean": -0.01170687641250118,
+   "top_is_same": false,
+   "chance_same": 0.16666666666666666
+  },
+  {
+   "unit_id": "C1_s4_scripted",
+   "same_max": -0.004786795057519298,
+   "cross_max": 0.004786795057519298,
+   "same_mean": -0.004786795057519298,
+   "cross_mean": -0.008817346578864538,
+   "top_is_same": false,
+   "chance_same": 0.16666666666666666
+  }
+ ],
+ "diff_max_mean": -0.025594579508457733,
+ "diff_max_sd": 0.014123340514296744,
+ "wilcoxon_p_max": 1.0,
+ "diff_mean_mean": -0.004908969089350887,
+ "diff_mean_sd": 0.010506694038952548,
+ "wilcoxon_p_mean": 0.90625,
+ "top_pair_same_family_rate": 0.0,
+ "chance_same_family_rate": 0.16666666666666666
+}
