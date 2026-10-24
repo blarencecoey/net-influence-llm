@@ -20,7 +20,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-llm = ["openai", "anthropic"]
+llm = ["openai"]
 dev = ["pytest", "ruff"]
 
 [tool.setuptools.packages.find]
