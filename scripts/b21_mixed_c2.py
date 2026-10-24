@@ -41,3 +41,13 @@ held = [x for x in recs if not set(x["seeds"]) & cal_seeds]
 print(f"\nheld-out units: {sorted({x['unit_id'] for x in held})}")
 for row in an.evaluate(held, th):
     print(row)
+
+# thresholds come from null runs only, so seeded runs on calibration seeds never entered the fit;
+# shown separately because analysis.check_heldout refuses any seed overlap
+print("\nall seeds, ignoring the seed-overlap guard (flagged = max score > thr and top pair true):")
+for det, st in (("netinf", an.PRIMARY_STATE), ("netinf", "none"), ("correlation", "-")):
+    t = th["detectors"][f"{det}|{st}"]
+    sel = [x for x in recs if x["detector"] == det and x["state"] == st]
+    for f in th["fprs"]:
+        k = sum(x["max_score"] > t[str(f)] and x["top_pair"] == x["true_pair"] for x in sel)
+        print(f"  {det} {st} @{f}: {k}/{len(sel)} (thr {t[str(f)]:.4f})")

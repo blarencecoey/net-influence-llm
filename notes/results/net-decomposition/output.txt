@@ -1,0 +1,29 @@
+110 null runs: C0 55, C1 55
+
+Player move entropy (nats; uniform = 1.099)
+  C0 L: mean 1.048  median 1.054  n=220
+  C1 L: mean 0.907  median 0.911  n=110
+  C1 M: mean 0.780  median 0.784  n=110
+
+Pair score = gamma - subtracted (means; medians in brackets)
+  state prev_n_distinct
+    C0 LL: gamma 0.1780 [0.1694]  subtracted 0.2193 [0.2105]  score -0.0413 [-0.0437]  n=330
+    C1 LL: gamma 0.1149 [0.1190]  subtracted 0.0503 [0.0489]  score 0.0646 [0.0687]  n=55
+    C1 LM: gamma 0.0373 [0.0356]  subtracted 0.1151 [0.1190]  score -0.0778 [-0.0817]  n=220
+    C1 MM: gamma 0.0343 [0.0319]  subtracted 0.0503 [0.0489]  score -0.0160 [-0.0174]  n=55
+  state none
+    C0 LL: gamma 0.1290 [0.1201]  subtracted 0.1776 [0.1725]  score -0.0486 [-0.0497]  n=330
+    C1 LL: gamma 0.0522 [0.0486]  subtracted 0.0251 [0.0251]  score 0.0270 [0.0250]  n=55
+    C1 LM: gamma 0.0151 [0.0136]  subtracted 0.0538 [0.0486]  score -0.0387 [-0.0322]  n=220
+    C1 MM: gamma 0.0150 [0.0130]  subtracted 0.0251 [0.0251]  score -0.0102 [-0.0117]  n=55
+  state prev_joint
+    C0 LL: gamma 0.0947 [0.0933]  subtracted 0.1188 [0.1208]  score -0.0242 [-0.0228]  n=330
+    C1 LL: gamma 0.0737 [0.0702]  subtracted 0.0947 [0.0951]  score -0.0211 [-0.0197]  n=55
+    C1 LM: gamma 0.0725 [0.0728]  subtracted 0.1139 [0.1129]  score -0.0415 [-0.0417]  n=220
+    C1 MM: gamma 0.1090 [0.1095]  subtracted 0.0947 [0.0951]  score 0.0143 [0.0150]  n=55
+
+Gross gamma (prev_n_distinct) at matched min(H_i, H_j)
+  [0.6, 0.8): C0 LL - (n=0) | C1 LL 0.0848 (n=1) | C1 LM 0.0365 (n=153) | C1 MM 0.0340 (n=51)
+  [0.8, 0.9): C0 LL - (n=0) | C1 LL 0.1170 (n=34) | C1 LM 0.0392 (n=67) | C1 MM 0.0379 (n=4)
+  [0.9, 1.0): C0 LL 0.1379 (n=43) | C1 LL 0.1128 (n=20) | C1 LM - (n=0) | C1 MM - (n=0)
+  [1.0, 1.1): C0 LL 0.1840 (n=287) | C1 LL - (n=0) | C1 LM - (n=0) | C1 MM - (n=0)
