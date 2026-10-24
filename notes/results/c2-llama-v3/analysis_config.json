@@ -1,0 +1,30 @@
+{
+  "runs": [
+    "runs/C2_llama-3.3-70b-instruct_p1.0_s0_20261024-120724",
+    "runs/C2_llama-3.3-70b-instruct_p1.0_s?_20261024-123914"
+  ],
+  "out": "notes\\results\\c2-llama-v3",
+  "state": "prev_n_distinct",
+  "secondary_states": [
+    "none",
+    "prev_joint"
+  ],
+  "calib_seeds": [
+    "0",
+    "1"
+  ],
+  "pool": false,
+  "alpha": 0.05,
+  "include_failed_pc": false,
+  "synthetic": null,
+  "states": [
+    "prev_n_distinct",
+    "none",
+    "prev_joint"
+  ],
+  "n_runs": 5,
+  "patterns": [
+    "runs/C2_llama-3.3-70b-instruct_p1.0_s0_20261024-120724",
+    "runs/C2_llama-3.3-70b-instruct_p1.0_s?_20261024-123914"
+  ]
+}

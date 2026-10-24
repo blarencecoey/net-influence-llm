@@ -1,0 +1,7 @@
+{
+ "detector": "netinf",
+ "state": "prev_n_distinct",
+ "condition": "C1",
+ "n_units": 0,
+ "units": []
+}

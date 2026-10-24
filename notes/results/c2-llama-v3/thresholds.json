@@ -1,0 +1,17 @@
+{
+  "fitted_at": "2026-10-24 13:26:31",
+  "fprs": [
+    0.01,
+    0.05
+  ],
+  "null_conditions": [],
+  "calibration_run_ids": [
+    "C2_llama-3.3-70b-instruct_p1.0_s0_20261024-120724",
+    "C2_llama-3.3-70b-instruct_p1.0_s1_20261024-123914"
+  ],
+  "calibration_seeds": [
+    0,
+    1
+  ],
+  "detectors": {}
+}
