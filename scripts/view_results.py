@@ -10,6 +10,8 @@ Routes:
                              spend, positive control, detector summary, held-out TPR/FPR
   /api/runs                  every run folder with its kind and headline fields
   /api/run/<run_id>          one run (game runs get every detector recomputed)
+  /api/detect/<run_id>       a game run's rounds, detectors and status only (polled live by the
+                             Detection tab; recomputed when the run folder changes)
   /api/tail/<run_id>?r=&c=   new rounds/calls of a game run since byte offsets r, c (live view)
   /files/<run_id>/<path>     a file inside a run folder (images, markdown, logs)
 Binds to 127.0.0.1 only. Results are recomputed when a run folder changes (no restart needed).
@@ -103,6 +105,11 @@ def make_handler(runs_dir: Path, cache: Cache):
                     body = v.tail(runs_dir, path[len("/api/tail/"):],
                                   int(qs.get("r", ["0"])[0]), int(qs.get("c", ["0"])[0]))
                     return self.send(json.dumps(body).encode("utf-8"), "application/json")
+                if path.startswith("/api/detect/"):
+                    rid = path[len("/api/detect/"):]
+                    return self.send(cache.get(f"detect:{rid}",
+                                               lambda: v.run_detection(runs_dir, rid)),
+                                     "application/json")
                 if path.startswith("/api/run/"):
                     rid = path[len("/api/run/"):]
                     return self.send(cache.get(f"run:{rid}", lambda: v.run_detail(runs_dir, rid)),

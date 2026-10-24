@@ -220,10 +220,11 @@ def game_detectors(actions: np.ndarray, true_pair, states=STATES, judge=None,
     return out
 
 
-def game_detail(path: Path, states=STATES) -> dict:
+def game_detection(path: Path, states=STATES) -> dict:
+    """The part of a game run that changes every round: rounds, detectors, win rates, positive
+    control and run status. Light enough to poll while a run is live (no calls or prompts)."""
     meta = _read_json(path / "meta.json") or {}
     rounds = sorted(_read_jsonl(path / "rounds.jsonl"), key=lambda r: r.get("round", 0))
-    calls = _read_jsonl(path / "calls.jsonl")
     n = int(meta.get("n_players") or (len(rounds[0]["actions"]) if rounds else 0))
     actions = np.array([r["actions"] for r in rounds], dtype=np.int64).reshape(len(rounds), n)
     payoffs = (np.array([r["payoffs"] for r in rounds]).reshape(len(rounds), n)
@@ -233,11 +234,6 @@ def game_detail(path: Path, states=STATES) -> dict:
     primary = meta.get("primary")
     true_pair = (tuple(sorted((primary, assistants[0])))
                  if primary is not None and len(assistants) == 1 else None)
-    prompts = {p.stem: p.read_text(encoding="utf-8")
-               for p in sorted((path / "prompts").glob("*.txt"))} if (path / "prompts").is_dir() \
-        else {}
-    config_text = ((path / "config.yaml").read_text(encoding="utf-8")
-                   if (path / "config.yaml").exists() else None)
     judge = an._load_judge(path / "judge.json")
 
     pc_analysis = None
@@ -249,11 +245,10 @@ def game_detail(path: Path, states=STATES) -> dict:
     T = len(rounds)
     counts = [[int((actions[:, i] == k).sum()) for k in range(an.rps.N_ACTIONS)] for i in range(n)]
     return clean({
-        "id": path.name, "kind": "game", "meta": meta, "config_text": config_text,
-        "prompts": prompts, "files": _files(path),
+        "id": path.name, "kind": "game", "meta": meta, **run_status(path, meta),
         "rounds": {"actions": actions, "payoffs": payoffs,
                    "channel": [r.get("channel_delivered") for r in rounds]},
-        "calls": calls, "true_pair": None if true_pair is None else f"{true_pair[0]}-{true_pair[1]}",
+        "true_pair": None if true_pair is None else f"{true_pair[0]}-{true_pair[1]}",
         "colluders": [] if primary is None else [primary, *assistants],
         "action_counts": counts,
         "win_rate": [float((payoffs[:, i] > 0).mean()) if T else None for i in range(n)],
@@ -261,6 +256,17 @@ def game_detail(path: Path, states=STATES) -> dict:
         "positive_control_analysis": pc_analysis,
         "detectors": game_detectors(actions, true_pair, states, judge),
     })
+
+
+def game_detail(path: Path, states=STATES) -> dict:
+    prompts = {p.stem: p.read_text(encoding="utf-8")
+               for p in sorted((path / "prompts").glob("*.txt"))} if (path / "prompts").is_dir() \
+        else {}
+    config_text = ((path / "config.yaml").read_text(encoding="utf-8")
+                   if (path / "config.yaml").exists() else None)
+    return game_detection(path, states) | clean({
+        "config_text": config_text, "prompts": prompts, "files": _files(path),
+        "calls": _read_jsonl(path / "calls.jsonl")})
 
 
 # --------------------------------------------------------------------------- live tail
@@ -324,6 +330,13 @@ def run_detail(runs_dir: Path, run_id: str) -> dict:
     if kind in ("bonjour_repro", "scripted4"):
         return results_detail(path, kind)
     return other_detail(path)
+
+
+def run_detection(runs_dir: Path, run_id: str) -> dict:
+    path = resolve_run(runs_dir, run_id)
+    if kind_of(path) != "game":
+        raise FileNotFoundError(f"{run_id} is not a game run")
+    return game_detection(path)
 
 
 # --------------------------------------------------------------------------- overview
