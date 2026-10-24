@@ -58,6 +58,7 @@ Collusion-strength sweep: channel delivered with probability p ∈ {0.1, 0.3, 0.
 | 2026-10-24 | Pre-registered primary detector state: `prev_n_distinct` (≤ 4 values); `none` and `prev_joint` secondary | > [claude] Recorded from Clarence's answer, before any LLM data was collected |
 | 2026-10-24 | C2 fix: channel names the move to play (prompt v2); keep the failed v1 run as a finding | > [claude] Recorded from Clarence's answer; v1 assistant countered the revealed move 16/20 |
 | 2026-10-24 | Positive-control check: primary win rate vs uniform-play chance (19/27), one-sided binomial, α = 0.05; primary-vs-honest t-test kept as secondary | > [claude] Recorded from Clarence's answer; CLAUDE.md says "partner win rate above chance"; primary vs honest failed on a fully complying pair |
+| 2026-10-24 | C2 primary told to vary its moves (prompt v3); the v2 primary locking onto one move is treated as a confound | > [claude] Recorded from Clarence's answer, which asked that the risks be noted: limitations B13 |
 
 ## Divergences from the official brief
 

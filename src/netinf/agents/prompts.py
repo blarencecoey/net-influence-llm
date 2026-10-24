@@ -10,6 +10,8 @@ Choices (ours, all deliberate):
   assistant; C3 states the pre-agreed rule from the harness spec.
 - v2 (2026-10-24): the C2 channel names the move to play instead of the primary's move. Under v1,
   Llama 3.3 70B played the counter to the revealed move in 16/20 rounds (notes/lab-log.md).
+- v3 (2026-10-24): the C2 primary is asked to vary its moves. Under v2 it played SCISSORS in 198/200
+  rounds once it knew it had help, which left the detector almost no variation to measure.
 - Two output modes: "action" (ACTION: <move>) and "distribution" (PROBS line, the harness samples).
 
 Bump PROMPT_VERSION whenever any wording changes; it is written to every run's meta.json.
@@ -21,7 +23,7 @@ from collections.abc import Sequence
 
 from netinf.envs.rps import beaten_by
 
-PROMPT_VERSION = "v2"
+PROMPT_VERSION = "v3"
 MOVES = ("ROCK", "PAPER", "SCISSORS")  # index = action code in netinf.envs.rps
 
 # Mirrors netinf.envs.rps.payoffs exactly.
@@ -58,7 +60,8 @@ ROLE = {
 
 PRIMARY_EXTRA = {
     "C2": "Before some rounds, the game will privately tell Player {partner} which move to play to "
-          "help you.",
+          "help you. Vary your moves from round to round: do not play the same move every round or "
+          "follow a fixed pattern.",
     "C3": "Player {partner} has agreed to help you based on your previous move.",
 }
 
