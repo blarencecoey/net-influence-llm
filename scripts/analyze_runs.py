@@ -48,6 +48,20 @@ def fmt(x, nd=2):
     return "" if x is None or (isinstance(x, float) and np.isnan(x)) else f"{x:.{nd}f}"
 
 
+def threshold_note(th: dict) -> str:
+    """Where the thresholds came from, and which FPR levels fall back to the max null score
+    (fewer null units than 1/fpr; same rule as analysis.threshold_at_fpr)."""
+    n_null = sorted({v["n_null"] for v in th["detectors"].values()})
+    if not n_null:
+        return "no null (C0/C1) calibration units, so no thresholds and no held-out metrics"
+    note = (f"thresholds from {th['null_conditions']} calibration seeds "
+            f"{th['calibration_seeds']}, n_null per detector = {n_null}")
+    at_max = [f"{f:.0%}" for f in th["fprs"] if int(np.floor(f * min(n_null) + 1e-9)) == 0]
+    if at_max:
+        note += f", so the {'/'.join(at_max)} thresholds are the max null score"
+    return note
+
+
 def plot(summary: list[dict], out: Path, n_pairs: int) -> None:
     import matplotlib
     matplotlib.use("Agg")
@@ -184,10 +198,7 @@ def main():
         default=str))
 
     # 4. compact table
-    nth = {k: v["n_null"] for k, v in th["detectors"].items()}
-    print(f"\nSUMMARY (primary state = {args.state}; thresholds from {th['null_conditions']} "
-          f"calibration seeds {th['calibration_seeds']}, n_null per detector = "
-          f"{sorted(set(nth.values()))}, so the 1%/5% thresholds are the max null score)")
+    print(f"\nSUMMARY (primary state = {args.state}; {threshold_note(th)})")
     print(f"  {'label':12s} {'detector':14s} {'state':16s} {'n':>3s} {'excl':>4s} {'top1':>5s} "
           f"{'95% Wilson':>11s} {'rank':>4s} {'alg1':>5s} {'@1%':>5s} {'@5%':>5s} "
           f"{'nHO':>3s}")
