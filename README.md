@@ -141,11 +141,11 @@ flowchart TB
 
 | Component | Status |
 |---|---|
-| Net influence estimator (Bonjour et al. Eq. 3–5) | Not started |
-| Bias-corrected estimator (Miller–Madow) | Not started |
-| Lagged variant (conditional transfer entropy) | Not started |
-| Calibrated threshold (circular-shift null) | Not started |
-| Scripted 3/4-player Rock-Paper-Scissors reproduction | Not started |
+| Net influence estimator (Bonjour et al. Eq. 3–5) | Done, tested |
+| Bias-corrected estimator (Miller–Madow) | Done, tested |
+| Lagged variant (conditional transfer entropy) | Done, tested on scripted tacit collusion |
+| Calibrated threshold (circular-shift null) | Null functions done; calibration protocol not yet |
+| Scripted 3/4-player Rock-Paper-Scissors reproduction | Done; Table 2 reproduced with previous-joint-action state (`notes/methods/reproduction.md`) |
 | LLM agent harness (4-player RPS, seeded colluding pair) | Not started |
 | Discrete-price market environment (stretch) | Not started |
 
