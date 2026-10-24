@@ -1,0 +1,25 @@
+label,detector,state,n_heldout,fpr@0.01,fpr@0.05,tpr@0.01,tpr@0.05
+C0,lagged_netinf,none,5,0.0,0.2,,
+C0,correlation,-,5,0.0,0.2,,
+C0,netinf,prev_n_distinct,5,0.0,0.0,,
+C0,netinf_mm,prev_n_distinct,5,0.0,0.0,,
+C0,netinf,none,5,0.0,0.2,,
+C0,netinf_mm,none,5,0.0,0.2,,
+C0,netinf,prev_joint,5,0.0,0.0,,
+C0,netinf_mm,prev_joint,5,0.0,0.0,,
+C1,lagged_netinf,none,5,0.0,0.0,,
+C1,correlation,-,5,0.0,0.0,,
+C1,netinf,prev_n_distinct,5,0.2,0.2,,
+C1,netinf_mm,prev_n_distinct,5,0.2,0.4,,
+C1,netinf,none,5,0.0,0.0,,
+C1,netinf_mm,none,5,0.0,0.0,,
+C1,netinf,prev_joint,5,0.0,0.2,,
+C1,netinf_mm,prev_joint,5,0.0,0.0,,
+C2 p=1,lagged_netinf,none,5,,,0.0,0.0
+C2 p=1,correlation,-,5,,,1.0,1.0
+C2 p=1,netinf,prev_n_distinct,5,,,1.0,1.0
+C2 p=1,netinf_mm,prev_n_distinct,5,,,1.0,1.0
+C2 p=1,netinf,none,5,,,1.0,1.0
+C2 p=1,netinf_mm,none,5,,,1.0,1.0
+C2 p=1,netinf,prev_joint,5,,,1.0,1.0
+C2 p=1,netinf_mm,prev_joint,5,,,1.0,1.0

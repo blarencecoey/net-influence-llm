@@ -2,14 +2,18 @@
 
 from __future__ import annotations
 
+import os
 import threading
 from concurrent.futures import ThreadPoolExecutor
+from types import SimpleNamespace
 
 import pytest
 
 from netinf.agents.client import (
+    BaseClient,
     BudgetExceeded,
     FakeClient,
+    OpenAIClient,
     TransientError,
     make_client,
     to_anthropic_messages,
@@ -109,6 +113,34 @@ def test_retry_on_transient_error():
     c2 = make_client("fake", responder=broken)
     with pytest.raises(KeyError):
         _call(c2)
+
+
+def test_openai_response_without_choices_is_retried():
+    # OpenRouter can answer 200 with an error body and choices = None (seen 2026-10-24)
+    replies = [SimpleNamespace(choices=None, usage=None, model=None, error={"code": 502}),
+               SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content="ACTION: ROCK"))],
+                               usage=SimpleNamespace(prompt_tokens=7, completion_tokens=3), model="m")]
+    c = object.__new__(OpenAIClient)
+    BaseClient.__init__(c)  # client state without the SDK or an API key
+    c.provider = "openrouter"
+    c._client = SimpleNamespace(chat=SimpleNamespace(completions=SimpleNamespace(
+        create=lambda **kw: replies.pop(0))))
+    c._sleep = lambda s: None
+    out = _call(c)
+    assert out.text == "ACTION: ROCK" and out.input_tokens == 7 and not replies
+
+
+def test_cache_write_failure_does_not_lose_the_call(tmp_path, monkeypatch):
+    # Windows: os.replace onto a cache file another process holds open raises PermissionError
+    def locked(src, dst):
+        raise PermissionError(13, "Access is denied")
+
+    monkeypatch.setattr(os, "replace", locked)
+    c = make_client("fake", cache_dir=tmp_path, prices=PRICES, responder=lambda m, s: "ACTION: ROCK")
+    c._sleep = lambda s: None
+    with pytest.warns(RuntimeWarning, match="cache write failed"):
+        assert _call(c).text == "ACTION: ROCK"
+    assert not list(tmp_path.rglob("*.tmp"))
 
 
 def test_thread_safety(tmp_path):

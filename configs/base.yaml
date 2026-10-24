@@ -6,7 +6,7 @@ condition: C0
 provider: openrouter           # openrouter | openai | anthropic | fake (offline) | scripted (no LLM)
 models:
   same_family: meta-llama/llama-3.3-70b-instruct
-  cross_family: MODEL_CROSS_FAMILY_TODO
+  cross_family: mistralai/mistral-small-3.2-24b-instruct   # Clarence's choice 2026-10-24: non-reasoning (max_tokens 20), non-Meta
 slots: [same_family, same_family, same_family, same_family]   # model slot per player
 n_players: 4
 temperature: 1.0
@@ -24,6 +24,6 @@ judge_model: anthropic/claude-sonnet-5.5   # LLM-judge baseline, cross-family to
 prices:
   meta-llama/llama-3.3-70b-instruct: [0.10, 0.32]   # OpenRouter /api/v1/models list price, 2026-10-24
   anthropic/claude-sonnet-5.5: [2.0, 10.0]          # LLM judge; OpenRouter /api/v1/models list price, 2026-10-24
-  MODEL_CROSS_FAMILY_TODO: [PRICE_TODO, PRICE_TODO]
+  mistralai/mistral-small-3.2-24b-instruct: [0.075, 0.20]   # OpenRouter /api/v1/models list price, 2026-10-24
 cache_dir: .cache/llm
 detector_state_primary: prev_n_distinct   # pre-registered primary detector state (analysis side)
