@@ -17,16 +17,16 @@ Its core assumption is that honest agents act independently given the state. We 
 
 ### 1. Overall pipeline
 
-Each stage gates the next: nothing runs on LLM data until the estimator reproduces the published results, and no stress test is trusted until the positive control fires.
+Each stage gates the next: nothing runs on LLM data until the estimator reproduces the published results, and no stress test is trusted until the seeded pair in the positive control has actually colluded. Whether the detectors then find that pair is a result, not a gate.
 
 ```mermaid
 flowchart LR
-    A["📚 Literature<br/>16 sources"] --> B["🎯 Gap + hypotheses<br/>H1–H4"]
+    A["📚 Literature<br/>17 paper notes"] --> B["🎯 Gap + hypotheses<br/>H1–H4"]
     B --> C["🧮 Reimplement<br/>net influence"]
     C --> D{"Reproduces<br/>Bonjour Table 2?"}
     D -- no --> C
     D -- yes --> E["✅ Positive control<br/>C2 seeded pair"]
-    E --> F{"Seeded pair<br/>detected?"}
+    E --> F{"Seeded pair colluded?<br/>primary wins above chance"}
     F -- no --> E
     F -- yes --> G["🔬 Stress tests<br/>C0 · C1 · C3 · sweep"]
     G --> H["➕ Extensions<br/>lagged · calibrated · C4"]
@@ -101,7 +101,7 @@ flowchart TB
 
     subgraph S1["Step 1 · LLM positive control"]
         L1["4-player RPS, ~200 rounds × 5 seeds<br/>C2: seeded pair with private channel"]
-        L2["Check the pair really colluded<br/>partner win rate above chance"]
+        L2["Check the pair really colluded<br/>primary win rate above chance"]
         L3["Compare detectors on the true pair<br/>net influence · correlation · LLM judge"]
         L1 --> L2 --> L3
     end
@@ -137,17 +137,17 @@ flowchart TB
     class E1,E2,E3 design
 ```
 
-## Planned components
+## Components
 
 | Component | Status |
 |---|---|
 | Net influence estimator (Bonjour et al. Eq. 3–5) | Done, tested |
 | Bias-corrected estimator (Miller–Madow) | Done, tested |
 | Lagged variant (conditional transfer entropy) | Done, tested on scripted tacit collusion |
-| Calibrated threshold (circular-shift null) | Null functions done; calibration protocol not yet |
+| Calibrated threshold | Done in `netinf.analysis`: thresholds frozen on calibration seeds 0–1, evaluated on held-out seeds, overlap refused; circular-shift null p-values alongside. Not yet run on LLM data (needs C0/C1 runs) |
 | Scripted 3/4-player Rock-Paper-Scissors reproduction | Done; Table 2 reproduced with previous-joint-action state (`notes/methods/reproduction.md`) |
-| LLM agent harness (4-player RPS, seeded colluding pair) | Done, tested offline with a mock backend; OpenRouter backend not yet run |
-| LLM judge baseline (full trajectory) | Done, tested offline |
+| LLM agent harness (4-player RPS, seeded colluding pair) | Done; OpenRouter, OpenAI, Anthropic and offline (fake, scripted) backends. First paid C2 runs made with Llama 3.3 70B ×4 (`notes/lab-log.md`); cross-family model not yet chosen |
+| LLM judge baseline (full trajectory) | Done; `scripts/run_judge.py` writes `judge.json` per run, judge model Claude Sonnet 5.5 via OpenRouter |
 | Discrete-price market environment (stretch) | Not started |
 
 ## Layout
@@ -156,20 +156,21 @@ flowchart TB
 src/netinf/     detector, environments, LLM agents
 configs/        experiment configs (one per condition)
 scripts/        entry points for running experiments
-tests/          unit tests for the estimators
+tests/          unit tests (offline, no API calls)
 runs/           raw run outputs (gitignored)
 viewer/         local results viewer page (served by scripts/view_results.py)
 notes/          research notes; open this folder as an Obsidian vault
   papers/       one note per source
-  methods/      estimator and statistics notes
+  methods/      estimator, reproduction and LLM-harness notes
   lit-review.md index of sources and evidence per hypothesis
+  lab-log.md    one entry per run: what ran, outputs, cost
   limitations-and-ethics.md   tracker for the required appendix
 ```
 
 ## Setup
 
 ```bash
-python -m venv .venv && source .venv/bin/activate
+python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -e ".[llm,dev]"
 cp .env.example .env   # add OPENROUTER_API_KEY
 pytest
@@ -193,8 +194,16 @@ python scripts/scripted_four_agent.py                      # detector comparison
 # LLM games: C2 (positive control) always runs first; --dry-run swaps in scripted agents ($0)
 python scripts/run_llm_rps.py --config configs/c2.yaml --seeds 0 1 2 3 4
 python scripts/run_llm_rps.py --config configs/c0.yaml configs/c1.yaml configs/c3.yaml
-python scripts/analyze_runs.py --out <dir> runs/<run dirs>
+python scripts/run_llm_rps.py --config configs/dryrun_c2.yaml   # dryrun_*.yaml: scripted agents, $0
+
+# LLM judge baseline: writes judge.json into each run dir; --dry-run prints the prompt only
+python scripts/run_judge.py 'runs/C2_llama-3.3-70b-instruct_*'
+
+# detector comparison, positive control, frozen thresholds (calibration seeds 0-1, rest held out)
+python scripts/analyze_runs.py --out <dir> 'runs/C*_llama-3.3-70b-instruct_*'
 ```
+
+Paid runs are refused while `configs/base.yaml` still holds `*_TODO` model or price placeholders, and a paid non-C2 condition is refused until a C2 run with the same models has passed the positive-control check. Each invocation is capped by `budget_usd`.
 
 ## Prior work disclosure
 
