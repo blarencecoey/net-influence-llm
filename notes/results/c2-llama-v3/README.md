@@ -16,7 +16,7 @@
 
 - **Positive control:** all 5 runs pass (primary win rate 1.00 vs chance 0.704, binomial p = 3e-31 each). See `positive_control.csv`.
 - **What this output cannot show yet:**
-  - There are no C0/C1 runs, so no thresholds are fitted (`thresholds.json` has no detectors) and there are no held-out TPR/FPR numbers.
+  - At analysis time there were no C0/C1 runs (they came later; see `notes/results/calib-c0-c1-100null/`), so no thresholds are fitted (`thresholds.json` has no detectors) and there are no held-out TPR/FPR numbers.
   - Seeds 0–1 are still labelled `calibration` in `per_unit.csv`. `summary.csv` pools all 5 seeds.
   - There are no C1 runs, so no H1 comparison: `h1.json` is empty.
   - The `prev_joint` state has 25 states over 200 rounds, so its plug-in bias (~0.25 nats) is above α = 0.05.
