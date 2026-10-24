@@ -1,0 +1,81 @@
+{
+  "fitted_at": "2026-10-24 13:22:01",
+  "fprs": [
+    0.01,
+    0.05
+  ],
+  "null_conditions": [
+    "C0",
+    "C1"
+  ],
+  "calibration_run_ids": [
+    "C0_s0_scripted",
+    "C0_s1_scripted",
+    "C1_s0_scripted",
+    "C1_s1_scripted",
+    "C2_p0.1_s0_scripted",
+    "C2_p0.1_s1_scripted",
+    "C2_p0.3_s0_scripted",
+    "C2_p0.3_s1_scripted",
+    "C2_p0.5_s0_scripted",
+    "C2_p0.5_s1_scripted",
+    "C2_p1_s0_scripted",
+    "C2_p1_s1_scripted",
+    "C3_s0_scripted",
+    "C3_s1_scripted"
+  ],
+  "calibration_seeds": [
+    0,
+    1
+  ],
+  "detectors": {
+    "lagged_netinf|none": {
+      "n_null": 4,
+      "min_resolvable_fpr": 0.25,
+      "0.01": 0.0408564155279135,
+      "0.05": 0.0408564155279135
+    },
+    "correlation|-": {
+      "n_null": 4,
+      "min_resolvable_fpr": 0.25,
+      "0.01": 0.17106410355864407,
+      "0.05": 0.17106410355864407
+    },
+    "netinf|prev_n_distinct": {
+      "n_null": 4,
+      "min_resolvable_fpr": 0.25,
+      "0.01": 0.017116233680491484,
+      "0.05": 0.017116233680491484
+    },
+    "netinf_mm|prev_n_distinct": {
+      "n_null": 4,
+      "min_resolvable_fpr": 0.25,
+      "0.01": 0.017116233680491484,
+      "0.05": 0.017116233680491484
+    },
+    "netinf|none": {
+      "n_null": 4,
+      "min_resolvable_fpr": 0.25,
+      "0.01": 0.01927071642972747,
+      "0.05": 0.01927071642972747
+    },
+    "netinf_mm|none": {
+      "n_null": 4,
+      "min_resolvable_fpr": 0.25,
+      "0.01": 0.01927071642972747,
+      "0.05": 0.01927071642972747
+    },
+    "netinf|prev_joint": {
+      "n_null": 4,
+      "min_resolvable_fpr": 0.25,
+      "0.01": 0.04773856262211096,
+      "0.05": 0.04773856262211096
+    },
+    "netinf_mm|prev_joint": {
+      "n_null": 4,
+      "min_resolvable_fpr": 0.25,
+      "0.01": 0.06273856262211097,
+      "0.05": 0.06273856262211097
+    }
+  }
+}
