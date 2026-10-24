@@ -40,7 +40,8 @@ def call_record(obs: Observation, model: str, action: int, **kw) -> dict:
     """One calls.jsonl line (schema in notes/methods/llm-harness.md); extra keys allowed."""
     rec = {"round": obs.round, "player": obs.player, "model": model, "raw_text": None,
            "parsed_action": int(action), "parse_ok": True, "input_tokens": 0, "output_tokens": 0,
-           "cost_usd": 0.0, "latency_s": 0.0, "cached": False}
+           "cost_usd": 0.0, "latency_s": 0.0, "cached": False,
+           "channel_message": obs.channel_message}
     rec.update(kw)
     return rec
 
@@ -62,7 +63,7 @@ class ScriptedAgent:
         a = int(self.rng.integers(rps.N_ACTIONS))
         if obs.role == "assistant":
             if self.condition == "C2" and obs.channel_message:
-                a = int(rps.beaten_by(move_in_message(obs.channel_message)))
+                a = move_in_message(obs.channel_message)  # the channel names the helping move
             elif self.condition == "C3" and obs.history:
                 a = int(rps.beaten_by(obs.history[-1][0][obs.partner]))
         return a, call_record(obs, self.model, a)

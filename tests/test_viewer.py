@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import os
 import threading
+import time
 import urllib.error
 import urllib.request
 from http.server import ThreadingHTTPServer
@@ -68,6 +70,37 @@ def test_summary_keeps_model_sets_apart(runs):
     assert v.summary(runs, "*")["n_games"] == 7
 
 
+def test_tail_reads_only_new_complete_lines(runs):
+    rid = next(e["id"] for e in v.list_runs(runs) if e.get("condition") == "C2")
+    path = runs / rid
+    meta = json.loads((path / "meta.json").read_text())
+    (path / "meta.json").write_text(json.dumps(meta | {"completed": False}))
+    lines = (path / "rounds.jsonl").read_text().splitlines(keepends=True)
+    (path / "rounds.jsonl").write_text("".join(lines[:3]) + lines[3][:10])  # writer mid-line
+
+    t = v.tail(runs, rid)
+    assert [r["round"] for r in t["rounds"]] == [0, 1, 2]
+    assert t["status"] == "live"
+    entry = next(e for e in v.list_runs(runs) if e["id"] == rid)
+    assert entry["status"] == "live" and entry["rounds_completed"] == 3
+
+    with open(path / "rounds.jsonl", "a") as f:  # the writer finishes the line and adds one
+        f.write(lines[3][10:] + lines[4])
+    t2 = v.tail(runs, rid, t["offsets"]["rounds"], t["offsets"]["calls"])
+    assert [r["round"] for r in t2["rounds"]] == [3, 4] and t2["calls"] == []
+    assert v.tail(runs, rid, t2["offsets"]["rounds"])["rounds"] == []
+
+
+def test_run_status_stalled_and_done(runs):
+    rid = next(e["id"] for e in v.list_runs(runs) if e.get("condition") == "C0")
+    path = runs / rid
+    assert v.run_status(path, {"completed": True})["status"] == "done"
+    old = time.time() - 2 * v.LIVE_SECONDS
+    for f in path.iterdir():
+        os.utime(f, (old, old))
+    assert v.run_status(path, {"completed": False})["status"] == "stalled"
+
+
 def test_resolve_run_refuses_escape(runs):
     with pytest.raises(FileNotFoundError):
         v.resolve_run(runs, "../" + runs.name)
@@ -91,6 +124,9 @@ def test_server_routes(runs):
         assert json.loads(get(f"/api/run/{ids[0]}")[1])["id"] == ids[0]
         assert json.loads(get("/api/summary")[1])["n_games"] == 6
         assert get("/files/x_notes/readme.md")[1].startswith(b"| a")
+        game = next(i for i in ids if i.startswith("C2"))
+        t = json.loads(get(f"/api/tail/{game}?r=0&c=0")[1])
+        assert len(t["rounds"]) == 150 and t["status"] == "done"
         for bad in ("/files/x_notes/../x_bonjour/results.json", "/api/run/nope"):
             with pytest.raises(urllib.error.HTTPError) as e:
                 get(bad)

@@ -68,6 +68,15 @@ def test_c0_does_not_pass(tmp_path):
     assert not g.positive_control(p, 0, [1])["passed"]
 
 
+def test_positive_control_is_vs_chance_not_honest():
+    # v2 smoke shape: the helping assistant also hands honest players points
+    pay = np.ones((20, 4), dtype=int)
+    pay[:, 0] = 0  # assistant sacrifices
+    pc = g.positive_control(pay, 1, [0])
+    assert pc["passed"] and pc["chance"] == pytest.approx(19 / 27)
+    assert not g.positive_control(np.ones((5, 4), dtype=int), 1, [0])["passed"]  # too few rounds
+
+
 def test_run_dir_schema_and_load_run(tmp_path):
     meta = g.run_one(cfg_for("C2", p_channel=0.5, n_rounds=50), 3, None, tmp_path)
     d = tmp_path / meta["run_id"]
@@ -118,6 +127,23 @@ def test_c3_assistant_follows_previous_move(tmp_path):
 ])
 def test_parse_action(text, want):
     assert parse_action(text) == want
+
+
+def test_c2_channel_names_helping_move(tmp_path):
+    from netinf.agents.base import move_in_message
+    from netinf.agents.prompts import channel_message
+    from netinf.envs.rps import beaten_by
+
+    for a in range(3):
+        msg = channel_message(1, a)
+        assert move_in_message(msg) == beaten_by(a) and "Player 2" in msg
+    meta = g.run_one(cfg_for("C2", n_rounds=20), 0, None, tmp_path)
+    calls = [json.loads(x) for x in (tmp_path / meta["run_id"] / "calls.jsonl").read_text()
+             .splitlines()]
+    seen = [c for c in calls if c["player"] == meta["assistant"]]
+    assert all(c["channel_message"] and c["parsed_action"] == move_in_message(c["channel_message"])
+               for c in seen)
+    assert all(c["channel_message"] is None for c in calls if c["player"] != meta["assistant"])
 
 
 def test_parse_distribution():

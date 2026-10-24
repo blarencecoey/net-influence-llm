@@ -180,7 +180,7 @@ pytest
 python scripts/view_results.py   # http://127.0.0.1:8765, reads runs/, read-only
 ```
 
-Overview per model set (positive control, spend, detector top-1 with CIs, held-out TPR/FPR at fixed FPR), and per run: net influence matrices for each state, pair rankings across detectors, payoffs, moves round by round, raw agent calls, prompts and config. The Table 2 reproduction and scripted 4-player outputs get their own pages. Numbers are recomputed with `netinf.analysis` whenever a run folder changes.
+Overview per model set (positive control, spend, detector top-1 with CIs, held-out TPR/FPR at fixed FPR), and per run: a **Turns** tab that follows a run live while it plays (the sidebar lists live runs) and replays finished runs round by round, showing each agent's move, raw reply, the private channel message and whether the assistant played the helping move; net influence matrices for each state, pair rankings across detectors, payoffs, moves round by round, raw agent calls, prompts and config. The Table 2 reproduction and scripted 4-player outputs get their own pages. Numbers are recomputed with `netinf.analysis` whenever a run folder changes.
 
 ## Prior work disclosure
 

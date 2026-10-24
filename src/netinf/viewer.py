@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import json
 import math
+import time
 import warnings
 from itertools import combinations
 from pathlib import Path
@@ -31,6 +32,7 @@ from netinf import detector as d
 from netinf.baselines import correlation_scores, rank_of_pair
 
 STATES = ("prev_n_distinct", "none", "prev_joint")  # primary (pre-registered) first
+LIVE_SECONDS = 180  # an unfinished run written to within this many seconds counts as live
 THRESHOLDS_FILE = "thresholds.json"
 TEXT_SUFFIXES = {".md", ".txt", ".yaml", ".yml", ".json", ".jsonl", ".csv", ".log"}
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".svg", ".gif"}
@@ -113,6 +115,19 @@ def _assistants(meta: dict) -> list[int]:
     return [] if a is None else list(a) if isinstance(a, list) else [a]
 
 
+def run_status(path: Path, meta: dict) -> dict:
+    """'done', 'live' (unfinished, written to recently) or 'stalled' (unfinished, quiet: crashed,
+    killed, or a very slow API), with seconds since the last write."""
+    mtimes = [p.stat().st_mtime for p in (path / "meta.json", path / "rounds.jsonl",
+                                          path / "calls.jsonl") if p.exists()]
+    age = time.time() - max(mtimes) if mtimes else None
+    if meta.get("completed") or meta.get("finished_at"):
+        status = "done"
+    else:
+        status = "live" if age is not None and age < LIVE_SECONDS else "stalled"
+    return {"status": status, "age_s": age}
+
+
 # --------------------------------------------------------------------------- run list
 
 
@@ -133,6 +148,10 @@ def run_entry(path: Path) -> dict | None:
         e["provider"] = next((a.get("provider") for a in m.get("agents") or []), None)
         e["pc_passed"] = pc.get("passed")
         e["pc_p"] = pc.get("p_value")
+        e |= run_status(path, m)
+        if e["status"] != "done":  # meta.json is only rewritten at the end; count logged rounds
+            with open(path / "rounds.jsonl", "rb") as f:
+                e["rounds_completed"] = f.read().count(b"\n")
     else:
         cfg = _read_json(path / "config.json") or {}
         e["config"] = cfg
@@ -241,6 +260,42 @@ def game_detail(path: Path, states=STATES) -> dict:
         "positive_control_analysis": pc_analysis,
         "detectors": game_detectors(actions, true_pair, states, judge),
     })
+
+
+# --------------------------------------------------------------------------- live tail
+
+
+def _read_from(path: Path, offset: int) -> tuple[list[dict], int]:
+    """Complete JSON lines after byte `offset`, and the offset just past the last one. A line the
+    writer has not finished (no newline yet) is left for the next call."""
+    if not path.exists():
+        return [], 0
+    with open(path, "rb") as f:
+        f.seek(offset)
+        data = f.read()
+    end = data.rfind(b"\n") + 1
+    recs = []
+    for line in data[:end].splitlines():
+        try:
+            recs.append(json.loads(line))
+        except json.JSONDecodeError:
+            continue
+    return recs, offset + end
+
+
+def tail(runs_dir: Path, run_id: str, rounds_offset: int = 0, calls_offset: int = 0) -> dict:
+    """New rounds and calls of a game run since the given byte offsets (0 = from the start), for
+    following a run while it plays or stepping through it afterwards. The harness writes a
+    round's calls, then the round line, once all agents have moved, so the unit is one round."""
+    path = resolve_run(runs_dir, run_id)
+    if kind_of(path) != "game":
+        raise FileNotFoundError(f"{run_id} is not a game run")
+    meta = _read_json(path / "meta.json") or {}
+    rounds, r_off = _read_from(path / "rounds.jsonl", rounds_offset)
+    calls, c_off = _read_from(path / "calls.jsonl", calls_offset)
+    return clean({"id": path.name, "meta": meta, **run_status(path, meta),
+                  "rounds": rounds, "calls": calls,
+                  "offsets": {"rounds": r_off, "calls": c_off}})
 
 
 # --------------------------------------------------------------------------- results.json runs

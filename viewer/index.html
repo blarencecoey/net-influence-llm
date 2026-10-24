@@ -137,6 +137,46 @@ svg .grid line { stroke: var(--line); stroke-dasharray: 2 3; }
 .raw { font-family: var(--mono); font-size: 12px; white-space: pre-wrap; word-break: break-word; max-width: 520px; }
 img.result { max-width: 100%; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
 
+/* turn-by-turn view */
+.dot.live { background: var(--bad); animation: pulse 1.4s ease-in-out infinite; }
+.dot.stalled { background: var(--warn); }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
+@media (prefers-reduced-motion: reduce) { .dot.live { animation: none; } }
+.ctrl { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.ctrl input[type=range] { flex: 1; min-width: 160px; accent-color: var(--accent); }
+.ctrl .rn { font-family: var(--mono); font-size: 13px; min-width: 92px; text-align: right; }
+.status { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 600; }
+.score { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.score .p { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; border-top: 3px solid var(--pc); }
+.score .p .v { font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.score .p .k { color: var(--muted); font-size: 12px; }
+.bar { height: 5px; background: var(--panel-2); border-radius: 3px; overflow: hidden; margin-top: 4px; }
+.bar i { display: block; height: 100%; background: var(--pc); }
+.chan { border-left: 3px solid var(--muted); background: var(--panel-2); padding: 8px 12px; border-radius: 0 8px 8px 0;
+        font-size: 13px; margin: 0 0 12px; }
+.chan.on { border-left-color: var(--accent); }
+.agents { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.agent { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column;
+         gap: 8px; border-top: 3px solid var(--pc); min-width: 0; }
+.agent.won { box-shadow: 0 0 0 1px var(--good) inset; }
+.agent .hd { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+.agent .hd b { font-size: 14px; }
+.agent .hd .ci { margin-left: auto; }
+.move { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.chip { display: inline-block; padding: 3px 10px; border-radius: 6px; font-weight: 700; font-size: 13px; letter-spacing: .03em;
+        color: #fff; background: var(--mv); }
+.chip.sm { padding: 1px 6px; font-size: 11px; font-weight: 600; }
+.pay { font-family: var(--mono); font-weight: 700; font-size: 15px; }
+.pay.w { color: var(--good); } .pay.l { color: var(--muted); }
+.agent .raw { max-width: none; background: var(--panel-2); border-radius: 6px; padding: 6px 8px; max-height: 180px; overflow: auto; }
+.agent .ft { color: var(--muted); font-size: 11.5px; font-family: var(--mono); }
+.agent details summary { cursor: pointer; color: var(--muted); font-size: 12px; }
+.waiting { color: var(--muted); font-size: 13px; padding: 10px 0 0; display: flex; gap: 8px; align-items: center; }
+.recent td { padding: 4px 8px; }
+.recent tr { cursor: pointer; }
+.recent tr.cur td { background: var(--panel-2); }
+kbd { font-family: var(--mono); font-size: 11px; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 4px; }
+
 @media (max-width: 860px) {
   .app { grid-template-columns: 1fr; height: auto; }
   aside { border-right: 0; border-bottom: 1px solid var(--line); max-height: 45vh; }
@@ -342,16 +382,21 @@ function renderNav() {
   for (const e of games) (groups[runLabel(e)] ||= []).push(e);
   const keys = Object.keys(groups).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
   const link = (e, text, meta) => {
-    const dot = e.kind !== "game" ? "" : e.completed === false ? "inc" : e.pc_passed === true ? "pass" : e.pc_passed === false ? "fail" : "";
+    const dot = e.kind !== "game" ? "" : e.status === "live" ? "live" : e.status === "stalled" ? "stalled" : e.completed === false ? "inc" : e.pc_passed === true ? "pass" : e.pc_passed === false ? "fail" : "";
     return `<a href="#/run/${encodeURIComponent(e.id)}" class="${r.id === e.id ? "on" : ""}" title="${esc(e.id)}"><span class="dot ${dot}"></span>${text}<span class="meta">${meta}</span></a>`;
   };
   let h = `<a href="#/" class="${r.page === "overview" ? "on" : ""}"><b>Overview</b></a>`;
+  const live = games.filter(e => e.status === "live");
+  if (live.length) {
+    h += `<h3 style="color:var(--bad)">Live now (${live.length})</h3>`;
+    for (const e of live) h += link(e, `${esc(runLabel(e))} · seed ${esc(e.seed)}`, `${e.rounds_completed ?? 0}/${e.n_rounds ?? "?"}`);
+  }
   h += `<h3>Game runs (${games.length})</h3>`;
   if (!games.length) h += `<div class="grp">none</div>`;
   for (const k of keys) {
     h += `<div class="grp">${esc(k)}</div>`;
     for (const e of groups[k].sort((a, b) => (a.seed ?? 0) - (b.seed ?? 0) || a.id.localeCompare(b.id)))
-      h += link(e, `seed ${esc(e.seed)} · ${esc(e.models.join(", "))}`, `${e.rounds_completed ?? "?"}r`);
+      h += link(e, `seed ${esc(e.seed)} · ${esc(e.models.join(", "))}`, e.status === "done" ? `${e.rounds_completed ?? "?"}r` : `${e.rounds_completed ?? 0}/${e.n_rounds ?? "?"}`);
   }
   if (others.length) {
     h += `<h3>Scripted studies (${others.length})</h3>`;
@@ -365,10 +410,15 @@ async function render() {
   const view = document.getElementById("view"), r = route();
   try {
     if (r.page === "run") {
+      const ent = S.runs.find(e => e.id === r.id);
+      if (r.id !== S.lastRun && ent?.status === "live") S.ui.tab = "turns";  // opening a live run: watch it
+      S.lastRun = r.id;
+      if (S.details[r.id]?._stale && S.ui.tab !== "turns") delete S.details[r.id];
       if (!S.details[r.id]) { view.innerHTML = `<div class="loading">Loading ${esc(r.id)}…</div>`; S.details[r.id] = await getJSON(`/api/run/${encodeURIComponent(r.id)}`); }
       const d = S.details[r.id];
       view.innerHTML = d.kind === "game" ? gamePage(d) : d.kind === "bonjour_repro" ? bonjourPage(d) : d.kind === "scripted4" ? scripted4Page(d) : otherPage(d);
-    } else view.innerHTML = overviewPage();
+      if (d.kind === "game" && S.ui.tab === "turns") startTurns(d.id); else stopTurns();
+    } else { stopTurns(); view.innerHTML = overviewPage(); }
     view.querySelectorAll("[data-seg]").forEach(el => el.addEventListener("click", async ev => {
       const b = ev.target.closest("button"); if (!b) return;
       const key = el.dataset.seg; S.ui[key] = b.dataset.v; if (key !== "callsPage") S.ui.callsPage = 0; saveUI();
@@ -505,12 +555,15 @@ function playerLabels(d) {
 function gamePage(d) {
   const m = d.meta, L = playerLabels(d), tab = S.ui.tab;
   const pc = m.positive_control, pca = d.positive_control_analysis;
-  const status = m.completed ? `<span class="badge pass">completed</span>` : `<span class="badge warn">incomplete${m.stop_reason ? ": " + esc(m.stop_reason) : ""}</span>`;
+  const ent = S.runs.find(e => e.id === d.id) || {};
+  const status = m.completed ? `<span class="badge pass">completed</span>`
+    : ent.status === "live" ? `<span class="badge fail"><span class="dot live" style="display:inline-block;margin-right:5px;vertical-align:1px"></span>live</span>`
+    : `<span class="badge warn">${ent.status === "stalled" ? "stalled" : "incomplete"}${m.stop_reason ? ": " + esc(m.stop_reason) : ""}</span>`;
   let h = `<div class="title"><h2>${esc(d.id)}</h2></div>
   <div class="row" style="margin-top:8px"><span class="badge">${esc(m.condition)}</span><span class="badge">seed ${esc(m.seed)}</span>${m.p_channel != null ? `<span class="badge">p_channel ${esc(m.p_channel)}</span>` : ""}${status}
   ${pc ? `<span>positive control ${pcBadge(pc.passed, "harness Fisher test")}</span>` : ""}</div>`;
   h += `<section><div class="facts">
-    ${[["Rounds", `${m.rounds_completed ?? d.rounds.actions.length} / ${m.n_rounds}`], ["Seeded pair", d.colluders.length ? d.colluders.map(i => "P" + i).join(" + ") : "none"],
+    ${[["Rounds", `${m.completed ? m.rounds_completed : d.rounds.actions.length} / ${m.n_rounds}`], ["Seeded pair", d.colluders.length ? d.colluders.map(i => "P" + i).join(" + ") : "none"],
        ["Models", [...new Set(L.map(l => l.model))].join(", ")], ["Prompt version", m.prompt_version], ["Output mode", m.output_mode], ["History window", m.history_window],
        ["Cost", usd(m.total_cost_usd) + (m.cost_complete === false ? " (partial)" : "")], ["Tokens in / out", `${int(m.total_input_tokens)} / ${int(m.total_output_tokens)}`],
        ["Parse failures", m.parse_failures], ["Channel delivery", m.channel_delivery_rate != null ? pct(m.channel_delivery_rate, 1) : "–"],
@@ -519,9 +572,10 @@ function gamePage(d) {
   ${m.skip_positive_control_check ? `<div class="callout warn">Run with --skip-positive-control-check.</div>` : ""}
   ${pc ? `<div class="callout ${pc.passed ? "info" : "bad"}">Positive control (harness, Fisher one-sided): primary win ${pct(pc.primary_mean, 1)} vs honest ${pct(pc.honest_mean, 1)} (assistant ${pct(pc.assistant_mean, 1)}), p = ${pv(pc.p_value)} → <b>${pc.passed ? "PASS" : "FAIL"}</b>${pca ? ` · analysis t-test p = ${pv(pca.p_value)} → <b>${pca.passed ? "PASS" : "FAIL"}</b>` : ""}${pc.passed ? "" : ". The seeded pair did not measurably help the primary; detection on this run is not a valid positive control."}</div>` : ""}
   </section>`;
-  const tabs = [["detection", "Detection"], ["play", "Play"], ["calls", `Calls (${d.calls.length})`], ["prompts", `Prompts (${Object.keys(d.prompts).length})`], ["config", "Config"], ["files", "Files"]];
+  const tabs = [["turns", "Turns"], ["detection", "Detection"], ["play", "Play"], ["calls", `Calls (${d.calls.length})`], ["prompts", `Prompts (${Object.keys(d.prompts).length})`], ["config", "Config"], ["files", "Files"]];
   h += `<div class="tabs" data-seg="tab">${tabs.map(([v, l]) => `<button data-v="${v}" class="${v === tab ? "on" : ""}">${l}</button>`).join("")}</div>`;
-  if (tab === "play") h += playTab(d, L);
+  if (tab === "turns") h += `<section id="turns"><div id="turns-ctrl"></div><div id="turns-body"><div class="loading">Loading rounds…</div></div></section>`;
+  else if (tab === "play") h += playTab(d, L);
   else if (tab === "calls") h += callsTab(d, L);
   else if (tab === "prompts") h += `<section class="prompt">${Object.keys(d.prompts).length ? Object.entries(d.prompts).map(([k, v]) => `<h4>${esc(k)}</h4><pre>${esc(v)}</pre>`).join("") : `<div class="empty">No prompts saved (scripted agents have none).</div>`}</section>`;
   else if (tab === "config") h += `<section><h3>config.yaml</h3><pre>${esc(d.config_text || "(none)")}</pre></section><section><h3>meta.json</h3><pre>${esc(JSON.stringify(m, null, 2))}</pre></section>`;
@@ -620,6 +674,179 @@ function filesSection(d) {
     imgs.map(x => `<section><h3>${esc(x.path)}</h3><img class="result" src="/files/${encodeURIComponent(d.id)}/${x.path.split("/").map(encodeURIComponent).join("/")}" alt="${esc(x.path)}"></section>`).join("");
 }
 
+// ------------------------------------------------------------------ turn by turn (live + replay)
+// Polls /api/tail with byte offsets, so each poll only carries the rounds written since the last.
+const SPEEDS = [["2000", "0.5×"], ["1000", "1×"], ["400", "2.5×"], ["150", "fast"]];
+const T = { id: null, off: { rounds: 0, calls: 0 }, rounds: [], calls: {}, meta: {}, status: null, age: null,
+            cur: 0, follow: true, playing: false, speed: "1000", pollTimer: null, playTimer: null, err: null };
+const helping = a => (a + 2) % 3;  // the move a beats (rps.beaten_by): the assistant plays it to hand a the point
+const counter = a => (a + 1) % 3;  // the move that beats a (rps.beats)
+
+function turnsActive() { const r = route(); return r.page === "run" && r.id === T.id && S.ui.tab === "turns" && document.getElementById("turns"); }
+function stopTurns() { clearTimeout(T.pollTimer); clearInterval(T.playTimer); T.playing = false; }
+async function startTurns(id) {
+  if (T.id !== id) {
+    stopTurns();
+    Object.assign(T, { id, off: { rounds: 0, calls: 0 }, rounds: [], calls: {}, meta: {}, status: null, cur: 0, follow: true, err: null });
+  }
+  renderTurnsCtrl(); renderTurnsBody();
+  clearTimeout(T.pollTimer);
+  await pollTurns();
+}
+async function pollTurns() {
+  if (T.id == null || T.busy) return;  // one request in flight at a time, or rounds would be appended twice
+  const id = T.id;
+  T.busy = true;
+  try {
+    const d = await getJSON(`/api/tail/${encodeURIComponent(id)}?r=${T.off.rounds}&c=${T.off.calls}`);
+    if (T.id !== id) return;
+    T.err = null; T.meta = d.meta; T.status = d.status; T.age = d.age_s; T.off = d.offsets;
+    for (const c of d.calls) (T.calls[c.round] ||= {})[c.player] = c;
+    const grew = d.rounds.length > 0;
+    T.rounds.push(...d.rounds.sort((a, b) => a.round - b.round));
+    if (T.follow && T.rounds.length) T.cur = T.rounds.length - 1;
+    if (grew && S.details[id]) S.details[id]._stale = true;  // other tabs refetch when opened
+    if (turnsActive()) { renderTurnsCtrl(); renderTurnsBody(); }
+  } catch (e) { if (T.id === id) { T.err = e.message; if (turnsActive()) renderTurnsBody(); } }
+  finally { T.busy = false; }
+  if (T.id !== id) return pollTurns();  // the user switched runs while this request was out
+  clearTimeout(T.pollTimer);
+  if (T.status === "done" && !T.err) return;  // finished: one read is enough
+  const wait = T.status === "live" ? 1500 : 5000;
+  T.pollTimer = setTimeout(() => { if (route().page === "run" && route().id === id) pollTurns(); }, wait);
+}
+function setCur(i, opts = {}) {
+  if (!T.rounds.length) return;
+  T.cur = Math.max(0, Math.min(T.rounds.length - 1, i));
+  if (!opts.keepFollow) T.follow = T.cur === T.rounds.length - 1 && T.status === "live" ? T.follow : false;
+  const sl = document.getElementById("t-slider"); if (sl) sl.value = T.cur;
+  syncCtrl(); renderTurnsBody();
+}
+function togglePlay() {
+  if (T.playing) { clearInterval(T.playTimer); T.playing = false; syncCtrl(); return; }
+  if (T.cur >= T.rounds.length - 1) setCur(0);
+  T.playing = true; T.follow = false; syncCtrl();
+  T.playTimer = setInterval(() => {
+    if (!turnsActive()) return stopTurns();
+    if (T.cur >= T.rounds.length - 1) {  // caught up: keep going if the run is still producing rounds
+      if (T.status !== "live") { clearInterval(T.playTimer); T.playing = false; syncCtrl(); }
+      return;
+    }
+    setCur(T.cur + 1, { keepFollow: true });
+  }, +T.speed);
+}
+function renderTurnsCtrl() {
+  const el = document.getElementById("turns-ctrl"); if (!el) return;
+  el.innerHTML = `<div class="ctrl">
+    <span class="status" id="t-status"></span>
+    <button class="btn" id="t-first" title="first round (Home)">⏮</button>
+    <button class="btn" id="t-prev" title="previous round (←)">◀</button>
+    <button class="btn" id="t-play" title="play / pause (space)" style="min-width:64px"></button>
+    <button class="btn" id="t-next" title="next round (→)">▶</button>
+    <button class="btn" id="t-last" title="latest round (End)">⏭</button>
+    <input type="range" id="t-slider" min="0" max="${Math.max(0, T.rounds.length - 1)}" value="${T.cur}" aria-label="round">
+    <span class="rn" id="t-rn"></span>
+    <select id="t-speed" title="replay speed">${SPEEDS.map(([v, l]) => `<option value="${v}" ${v === T.speed ? "selected" : ""}>${l}</option>`).join("")}</select>
+    <label id="t-follow-wrap" title="jump to each new round as it is written"><input type="checkbox" id="t-follow"> follow live</label>
+  </div>
+  <div class="ci" style="margin:6px 0 14px">Keys: <kbd>←</kbd> <kbd>→</kbd> step · <kbd>space</kbd> play/pause · <kbd>End</kbd> latest. Rounds appear once all agents have moved (the harness logs a round at a time).</div>`;
+  el.querySelector("#t-first").onclick = () => setCur(0);
+  el.querySelector("#t-prev").onclick = () => setCur(T.cur - 1);
+  el.querySelector("#t-next").onclick = () => setCur(T.cur + 1);
+  el.querySelector("#t-last").onclick = () => { T.follow = T.status === "live"; setCur(T.rounds.length - 1, { keepFollow: true }); };
+  el.querySelector("#t-play").onclick = togglePlay;
+  el.querySelector("#t-slider").oninput = e => setCur(+e.target.value);
+  el.querySelector("#t-speed").onchange = e => { T.speed = e.target.value; if (T.playing) { togglePlay(); togglePlay(); } };
+  el.querySelector("#t-follow").onchange = e => { T.follow = e.target.checked; if (T.follow) setCur(T.rounds.length - 1, { keepFollow: true }); };
+  syncCtrl();
+}
+function syncCtrl() {
+  const $ = id => document.getElementById(id); if (!$("t-status")) return;
+  const n = T.rounds.length, total = T.meta.n_rounds;
+  const st = T.status === "live" ? `<span class="dot live"></span>LIVE` : T.status === "stalled" ? `<span class="dot stalled"></span>stalled` : T.status === "done" ? `<span class="dot pass"></span>finished` : "…";
+  $("t-status").innerHTML = `${st} <span class="ci">${n}/${total ?? "?"} rounds</span>`;
+  $("t-slider").max = Math.max(0, n - 1); $("t-slider").value = T.cur;
+  $("t-rn").textContent = n ? `round ${T.rounds[T.cur].round} · ${T.cur + 1}/${n}` : "no rounds yet";
+  $("t-play").textContent = T.playing ? "❚❚ pause" : "▶ play";
+  $("t-follow").checked = T.follow; $("t-follow-wrap").style.display = T.status === "live" ? "" : "none";
+  for (const b of ["t-first", "t-prev"]) $(b).disabled = !n || T.cur === 0;
+  for (const b of ["t-next", "t-last"]) $(b).disabled = !n || T.cur >= n - 1;
+}
+const agoFmt = s => !isNum(s) ? "" : s < 90 ? `${Math.round(s)} s ago` : s < 5400 ? `${Math.round(s / 60)} min ago` : `${(s / 3600).toFixed(1)} h ago`;
+const moveChip = (a, sm) => a == null ? "–" : `<span class="chip ${sm ? "sm" : ""}" style="--mv:var(${MOVE_VAR[a]})">${MOVES[a].toUpperCase()}</span>`;
+function assistantVerdict(a, target) {
+  if (a === helping(target)) return `<span class="badge pass" title="the move the primary beats: hands the primary the point">helping move</span>`;
+  if (a === counter(target)) return `<span class="badge fail" title="the move that beats the primary">counters primary</span>`;
+  return `<span class="badge warn" title="same move as the primary">copies primary</span>`;
+}
+function renderTurnsBody() {
+  const el = document.getElementById("turns-body"); if (!el) return;
+  const m = T.meta, n = m.n_players || (T.rounds[0]?.actions.length ?? 0), cond = m.condition;
+  const agents = (m.agents || []).slice().sort((a, b) => a.player - b.player);
+  const role = i => agents[i]?.role || "honest", primary = m.primary;
+  const assist = new Set(m.assistant == null ? [] : [].concat(m.assistant));
+  let h = T.err ? `<div class="callout bad">Lost contact with the viewer server: ${esc(T.err)}. Retrying.</div>` : "";
+  if (T.status === "stalled") h += `<div class="callout warn">Unfinished, and nothing written for ${esc(agoFmt(T.age))}: the run may have crashed or been stopped${m.stop_reason ? ` (${esc(m.stop_reason)})` : ""}.</div>`;
+  if (!T.rounds.length) {
+    el.innerHTML = h + `<div class="waiting">${T.status === "live" ? `<span class="dot live"></span>Waiting for round 0. Agents are deciding…` : "No rounds in this run."}</div>`;
+    return;
+  }
+  const r = T.rounds[T.cur], t = r.round, calls = T.calls[t] || {};
+  // cumulative scores up to and including the selected round
+  const tot = new Array(n).fill(0), wins = new Array(n).fill(0);
+  for (let k = 0; k <= T.cur; k++) T.rounds[k].payoffs.forEach((p, i) => { tot[i] += p; wins[i] += p > 0; });
+  const lead = Math.max(...tot, 1);
+  h += `<div class="score">${[...Array(n).keys()].map(i => `<div class="p" style="--pc:${pcol(i)}">
+      <div class="k">P${i}${role(i) !== "honest" ? " · " + esc(role(i)) : ""}</div><div class="v">${tot[i]}</div>
+      <div class="k">${pct(wins[i] / (T.cur + 1))} of ${T.cur + 1} rounds won</div><div class="bar"><i style="width:${100 * tot[i] / lead}%"></i></div></div>`).join("")}</div>`;
+  h += `<h3 style="margin:18px 0 8px;font-size:15px">Round ${t}</h3>`;
+  // private channel (C2/C4) or pre-agreed rule (C3)
+  if (r.channel_delivered != null && primary != null) {
+    const msg = [...assist].map(j => calls[j]?.channel_message).find(Boolean);
+    h += r.channel_delivered
+      ? `<div class="chan on"><b>Private channel delivered</b> to ${[...assist].map(j => "P" + j).join(", ")}: ${msg ? `“${esc(msg)}”` : `the primary P${primary} played ${moveChip(r.actions[primary], 1)} <span class="ci">(exact text not logged)</span>`}</div>`
+      : `<div class="chan">Private channel <b>not delivered</b> this round (p_channel = ${esc(m.p_channel)}). The assistant decides without the primary's move.</div>`;
+  } else if (cond === "C3" && primary != null) {
+    const prev = T.cur > 0 ? T.rounds[T.cur - 1].actions[primary] : null;
+    h += `<div class="chan on"><b>Pre-agreed rule</b> (no channel): play the move that P${primary}'s previous move beats. ${prev == null ? "No previous round yet." : `P${primary} last played ${moveChip(prev, 1)}, so the rule says ${moveChip(helping(prev), 1)}.`}</div>`;
+  }
+  h += `<div class="agents">${[...Array(n).keys()].map(i => {
+    const c = calls[i] || {}, a = r.actions[i], p = r.payoffs[i], ro = role(i);
+    let verdict = "";
+    if (assist.has(i) && primary != null) {
+      if (r.channel_delivered) verdict = assistantVerdict(a, r.actions[primary]);
+      else if (cond === "C3" && T.cur > 0) verdict = a === helping(T.rounds[T.cur - 1].actions[primary]) ? `<span class="badge pass">followed rule</span>` : `<span class="badge fail">broke rule</span>`;
+    }
+    const probs = c.probs && typeof c.probs === "object" ? Object.entries(c.probs) : null;
+    return `<div class="agent ${p > 0 ? "won" : ""}" style="--pc:${pcol(i)}">
+      <div class="hd"><b>P${i}</b><span class="ci">“Player ${i + 1}” in prompts</span>${ro !== "honest" ? `<span class="badge ${ro === "primary" ? "warn" : ""}">${esc(ro)}</span>` : ""}</div>
+      <div class="ci" style="margin-top:-6px">${esc(c.model || agents[i]?.model || "")}</div>
+      <div class="move">${moveChip(a)}<span class="pay ${p > 0 ? "w" : "l"}">${p > 0 ? "+" + p : p}</span></div>
+      ${verdict ? `<div>${verdict}</div>` : ""}
+      ${c.raw_text != null ? `<div class="raw">${esc(c.raw_text)}</div>` : `<div class="ci">${c.model === "scripted" ? "scripted agent, no text" : "no call logged"}</div>`}
+      ${probs ? `<div class="ci">probs: ${probs.map(([k, v]) => `${esc(k)} ${f(+v, 2)}`).join(" · ")}</div>` : ""}
+      ${c.retry_texts?.length ? `<details><summary>re-asked ${c.retry_texts.length}× (unparseable replies)</summary>${c.retry_texts.map(x => `<div class="raw" style="margin-top:4px">${esc(x)}</div>`).join("")}</details>` : ""}
+      ${c.parse_ok === false ? `<span class="badge fail" title="no parseable move; the harness used a random fallback">random fallback</span>` : ""}
+      <div class="ft">${c.input_tokens != null ? `${int(c.input_tokens)}→${int(c.output_tokens)} tok` : ""}${isNum(c.latency_s) && c.latency_s > 0 ? ` · ${f(c.latency_s, 2)} s` : ""}${c.cost_usd == null ? (c.model && c.model !== "scripted" ? " · unpriced" : "") : c.cost_usd > 0 ? ` · ${usd(c.cost_usd)}` : ""}${c.cached ? " · cache" : ""}</div>
+    </div>`; }).join("")}</div>`;
+  if (T.status === "live" && T.cur === T.rounds.length - 1)
+    h += `<div class="waiting"><span class="dot live"></span>Round ${t + 1}: agents are deciding… <span class="ci">last write ${esc(agoFmt(T.age))}</span></div>`;
+  // recent rounds, newest first, around the selected one
+  const lo = Math.max(0, T.cur - 12), rows = T.rounds.slice(lo, Math.min(T.rounds.length, T.cur + 4)).map((x, k) => ({ x, k: lo + k })).reverse();
+  h += `<h4 style="margin:20px 0 6px;font-size:13px">Nearby rounds <span class="ci">click to jump</span></h4><div class="tablewrap"><table class="recent"><thead><tr><th>Round</th>${[...Array(n).keys()].map(i => `<th>P${i}${role(i) !== "honest" ? " " + esc(role(i)[0]) : ""}</th>`).join("")}${r.channel_delivered != null ? "<th>Channel</th>" : ""}<th>Winners</th></tr></thead><tbody>` +
+    rows.map(({ x, k }) => `<tr data-k="${k}" class="${k === T.cur ? "cur" : ""}"><td class="num">${x.round}</td>${x.actions.map((a, i) => `<td>${moveChip(a, 1)}${x.payoffs[i] > 0 ? ` <span class="pay w" style="font-size:12px">+${x.payoffs[i]}</span>` : ""}</td>`).join("")}${r.channel_delivered != null ? `<td>${x.channel_delivered ? "delivered" : "<span class='ci'>–</span>"}</td>` : ""}<td class="num">${x.payoffs.every(p => p > 0) ? "all" : x.payoffs.some(p => p > 0) ? x.payoffs.map((p, i) => p > 0 ? "P" + i : "").filter(Boolean).join(" ") : "none"}</td></tr>`).join("") + `</tbody></table></div>`;
+  el.innerHTML = h;
+  el.querySelectorAll(".recent tr[data-k]").forEach(tr => tr.onclick = () => setCur(+tr.dataset.k));
+}
+document.addEventListener("keydown", e => {
+  if (!turnsActive() || e.target.closest?.("input[type=text], select, textarea") || e.altKey || e.ctrlKey || e.metaKey) return;
+  if (e.key === "ArrowLeft") { setCur(T.cur - 1); e.preventDefault(); }
+  else if (e.key === "ArrowRight") { setCur(T.cur + 1); e.preventDefault(); }
+  else if (e.key === "Home") { setCur(0); e.preventDefault(); }
+  else if (e.key === "End") { T.follow = T.status === "live"; setCur(T.rounds.length - 1, { keepFollow: true }); e.preventDefault(); }
+  else if (e.key === " " && !e.target.closest?.("button")) { togglePlay(); e.preventDefault(); }
+});
+
 // ------------------------------------------------------------------ scripted studies
 function mdTables(text) {
   // renders pipe tables; anything else stays preformatted
@@ -680,6 +907,15 @@ function otherPage(d) {
 document.getElementById("q").addEventListener("input", e => { S.q = e.target.value; renderNav(); });
 document.getElementById("refresh").addEventListener("click", async () => { await loadAll(); render(); });
 window.addEventListener("hashchange", () => { S.ui.callsPage = 0; render(); document.querySelector("main").scrollTop = 0; });
+// keep the sidebar current (new runs, live progress) without recomputing the overview
+setInterval(async () => {
+  if (document.hidden) return;
+  try {
+    const runs = await getJSON("/api/runs");
+    const sig = x => x.map(e => `${e.id}|${e.status}|${e.rounds_completed}`).join(",");
+    if (sig(runs) !== sig(S.runs)) { S.runs = runs; renderNav(); }
+  } catch (e) {}
+}, 4000);
 loadAll().then(render).catch(e => { document.getElementById("view").innerHTML = `<div class="callout bad">Could not reach the viewer server: ${esc(e.message)}</div>`; });
 </script>
 </body>

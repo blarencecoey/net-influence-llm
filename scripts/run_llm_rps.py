@@ -38,8 +38,8 @@ def report(meta: dict) -> None:
     pc = meta.get("positive_control")
     if pc:
         print(f"  positive control ({meta['condition']}): primary {pc['primary_mean']:.3f} vs "
-              f"honest {pc['honest_mean']:.3f} (assistant {pc['assistant_mean']:.3f}), "
-              f"one-sided Fisher p = {pc['p_value']:.2g} -> "
+              f"chance {pc['chance']:.3f} (honest {pc['honest_mean']:.3f}, assistant "
+              f"{pc['assistant_mean']:.3f}), one-sided binomial p = {pc['p_value']:.2g} -> "
               f"{'PASS' if pc['passed'] else 'FAIL'}")
 
 
