@@ -64,8 +64,8 @@ def scores_figure() -> None:
         ax.scatter(x, y, s=16, color=col, edgecolor=SURFACE, linewidth=0.6, zorder=3)
     for f, ls, va in (("0.01", "--", "bottom"), ("0.05", ":", "top")):  # 1% above, 5% below
         ax.axhline(t[f], color=INK2, lw=1, ls=ls, zorder=2)
-        ax.text(len(groups) - 0.45, t[f], f"{float(f):.0%} FPR threshold {t[f]:.3f}",
-                va=va, ha="right", fontsize=7.5, color=INK2)
+        ax.text(1.01, t[f], f"{float(f):.0%} FPR\nthreshold {t[f]:.3f}", va=va, ha="left",
+                fontsize=7, color=INK2, transform=ax.get_yaxis_transform(), clip_on=False)
     ax.axhline(0, color=GRID, lw=1, zorder=1)
     ax.set_xticks(range(len(groups)), [g[0] for g in groups], fontsize=7.5)
     ax.set_xlim(-0.6, len(groups) - 0.4)
