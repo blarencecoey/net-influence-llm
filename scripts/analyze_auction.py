@@ -160,3 +160,20 @@ for cond in ("A0", "A1", "A2"):
         t = stats.ttest_1samp(g_run, 0.0)
         print(f"     best-response gap vs 0 across runs: t = {t.statistic:.2f}, two-sided p = {t.pvalue:.2g}")
 df.drop(columns=["families"]).to_csv(args.out / "per_unit.csv", index=False)
+
+# price paths for the report figure: mean over runs of the mean ask and trade price per 10-hour block
+paths = []
+for r in runs:
+    m = r["meta"]
+    models = "+".join(sorted({a["model"].split("/")[-1] for a in m["agents"]}))
+    ask, price = r["asks"].mean(axis=1), r["trade_price"]
+    for i in range(0, len(ask), 10):
+        paths.append({"condition": m["condition"], "models": models, "run_id": r["id"], "hour": i + 1,
+                      "mean_ask": float(ask[i:i + 10].mean()),
+                      "trade_price": float(np.nanmean(price[i:i + 10]))})
+(pd.DataFrame(paths).groupby(["condition", "models", "hour"])
+ .agg(mean_ask=("mean_ask", "mean"), trade_price=("trade_price", "mean"), n_runs=("run_id", "nunique"))
+ .reset_index().to_csv(args.out / "price_paths.csv", index=False))
+(args.out / "references.json").write_text(json.dumps(
+    {"equilibrium_ask": aq.symmetric_equilibrium(), "joint_optimal_ask": aq.joint_optimal_ask(),
+     "midpoint": 90}), encoding="utf-8")
