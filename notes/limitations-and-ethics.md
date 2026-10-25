@@ -13,7 +13,7 @@ Add a line whenever a run, bug or reading reveals one. Mark status: `open` (appl
 
 | # | Limitation | Source | Status |
 |---|---|---|---|
-| A1 | Assumes exactly two colluders | [[bonjour-2022]] | open; C4 stretch |
+| A1 | Assumes exactly two colluders | [[bonjour-2022]] | open; C4 stretch. > [claude] 2026-10-25: three-colluder C4 not run. The cross-family-pair arm of C4 is covered by the mixed C2 runs (6/6 detected, `notes/results/b21-mixed-c2/family-split/`), which still has two colluders, so A1 stays open |
 | A2 | Assumes honest agents are conditionally independent given state; shared LLM priors violate it | [[bonjour-2022]], [[xu-2026]], [[guo-2025]] | > [claude] tested (C1, 55 seeds, Llama 3.3 70B ×2 + Mistral Small 3.2 ×2): Algorithm 1 at α = 0.05 flags a pair in 40/55 C1 runs vs 10/55 C0 under the pre-registered state, but 12/55 vs 11/55 with no state and 8/55 vs 0/55 with prev_joint. The top C1 pair is a same-model pair in 54/55, 47/55 and 40/55 runs respectively (`notes/results/h1-by-state/`). Mechanism in A14 |
 | A3 | Same-round CMI misses coordination carried through history (tacit collusion, punishment) | [[fish-2024]], [[eschenbaum-meylahn-2026]] | open; H2 lagged variant |
 | A4 | Needs discrete actions and a small state space; plug-in bias ≈ 2\|S\|/N nats in RPS | [[estimation]] §1 | open |

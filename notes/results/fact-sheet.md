@@ -31,6 +31,17 @@ Sources: `c2-llama-v3/`, `b21-mixed-c2/output_calib_v2.txt`; re-checked with `sc
 - Held-out TPR at frozen 1 % and 5 %: Llama 5/5, mixed 3/3 (only s0, s1, s4 are outside 5–54).
 - Rounds to detection (`rounds-to-detection/output.txt`, thresholds refitted per T): C2 top-1 1.00 and held-out TPR 1.00 at every T from 25 to 200, both states.
 
+### 2b. C4 arm: cross-family colluding pair (from the mixed C2 runs, no new games)
+
+Source: `b21-mixed-c2/family-split/output.txt`. The mixed C2 runs drew roles at random, so 6 of the 10 have a Llama–Mistral seeded pair (Llama→Mistral s7, s9, s20, s24; Mistral→Llama s1, s4). Not a planned condition: seeds were not chosen for it, p = 1.0 only, and only s1, s4 (cross) and s0 (same) are outside calibration seeds 5–54. Flags are max score > frozen threshold and top pair true; "all" ignores the seed-overlap guard (thresholds come from null runs only).
+
+| Seeded pair | n (held out) | PC pass | netinf (prev_n_distinct) top-1 | true-pair score mean (sd), min | margin over next pair, min | Alg. 1 | flag @1 % all / held out | lagged top-1 | correlation top-1 |
+|---|---|---|---|---|---|---|---|---|---|
+| Same-family (LL ×1, MM ×3) | 4 (1) | 4/4 | 4/4 | 0.794 (0.076), 0.711 | +0.712 | 4/4 | 4/4 / 1/1 | 0/4 | 4/4 |
+| Cross-family (LM ×6) | 6 (2) | 6/6 | 6/6 | 0.837 (0.071), 0.736 | +0.743 | 6/6 | 6/6 / 2/2 | 0/6 | 6/6 |
+
+- Same at 5 % and under state `none` (cross-family true-pair score 0.936, sd 0.089).
+
 ## 3. Null runs (C0, C1) and frozen thresholds
 
 Sources: `calib-c0-c1-100null/summary.csv`, `heldout.csv`; `h1-by-state/output.txt`.
