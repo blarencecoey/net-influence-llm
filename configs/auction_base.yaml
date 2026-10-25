@@ -1,0 +1,22 @@
+# Double auction (netinf.envs.auction): 5 LLM sellers, 5 scripted buyers. Condition configs inherit via `base:`.
+condition: A0
+provider: openrouter
+models:
+  same_family: meta-llama/llama-3.3-70b-instruct
+  cross_family: mistralai/mistral-small-3.2-24b-instruct
+slots: [same_family, same_family, same_family, same_family, same_family]
+n_players: 5
+temperature: 1.0
+max_tokens: 20
+history_window: 5              # last 5 hours, as in Agrawal et al. 2025
+n_rounds: 200
+seeds: [0, 1, 2, 3, 4]
+p_channel: null
+max_reasks: 2
+max_workers: 5
+budget_usd: 5.0
+prices:
+  meta-llama/llama-3.3-70b-instruct: [0.10, 0.32]          # OpenRouter /api/v1/models list price, 2026-10-24
+  mistralai/mistral-small-3.2-24b-instruct: [0.075, 0.20]  # OpenRouter /api/v1/models list price, 2026-10-24
+cache_dir: .cache/llm
+detector_state_primary: prev_price_band   # declared before any auction data (notes/00-plan.md)

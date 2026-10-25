@@ -1,0 +1,4 @@
+# A2: seeded pair, private channel with the primary's ask, delivered every hour. Positive control: run first.
+base: auction_base.yaml
+condition: A2
+p_channel: 1.0
