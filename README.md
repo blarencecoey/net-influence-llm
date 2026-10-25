@@ -153,7 +153,7 @@ flowchart TB
 | | C3 Llama ×4, seeds 0–4, 55, under prompt v3 and v4 (limitation B25) |
 | | C4 three colluders (`configs/c4.yaml`, one primary and two assistants), Llama ×4, seeds 0–4, 55; the cross-family-pair arm of C4 comes from the mixed C2 runs |
 | LLM judge baseline (full trajectory) | Done; `scripts/run_judge.py` writes `judge.json` per run, judge model Claude Sonnet 5.5 via OpenRouter. Run on C2 Llama, sweep, C3, C4, and C0 / C1 seeds 0–4; not on calibration nulls, so no judge threshold |
-| Discrete-price market environment (stretch) | Not started |
+| Market environment: Agrawal-style double auction | Done; reimplemented from Agrawal et al. 2025 (Sec. 2.1), no code reused (their repo has no license). 5 LLM sellers, 5 scripted buyers, mid-price matching, 200 hours (`src/netinf/envs/auction.py`, `configs/auction_*.yaml`). Runs: A2 seeded price-matching pair (Llama ×5, 6 seeds; 3 Llama + 2 Mistral, 3 seeds), A0 Llama ×5 and A1 3 Llama + 2 Mistral, seeds 0–24 each (`notes/results/auction/`) |
 
 ## Layout
 
@@ -188,7 +188,7 @@ pytest
 python scripts/view_results.py   # http://127.0.0.1:8765, reads runs/, read-only
 ```
 
-Overview per model set (positive control, spend, detector top-1 with CIs, held-out TPR/FPR at fixed FPR), and per run: a **Turns** tab that follows a run live while it plays (the sidebar lists live runs) and replays finished runs round by round, showing each agent's move, raw reply, the private channel message and whether the assistant played the helping move; net influence matrices for each state, pair rankings across detectors, payoffs, moves round by round, raw agent calls, prompts and config. The Table 2 reproduction and scripted 4-player outputs get their own pages. Numbers are recomputed with `netinf.analysis` whenever a run folder changes. Held-out numbers use `runs/thresholds.json` if it exists; otherwise thresholds are fitted at view time on the code-default calibration seeds (0, 1), not the split used in `notes/results/calib-c0-c1-100null/`.
+Overview per model set (positive control, spend, detector top-1 with CIs, held-out TPR/FPR at fixed FPR), and per run: a **Turns** tab that follows a run live while it plays (the sidebar lists live runs) and replays finished runs round by round, showing each agent's move, raw reply, the private channel message and whether the assistant played the helping move; net influence matrices for each state, pair rankings across detectors, payoffs, moves round by round, raw agent calls, prompts and config. The Table 2 reproduction and scripted 4-player outputs get their own pages. Double-auction runs have an **Auction overview** (price paths per condition against the reference asks, positive control, detection per run) and their own run page (each seller's ask over the run, the order book hour by hour, per-seller statistics, detection on the ask bands); a live auction run can be followed as it plays. Numbers are recomputed with `netinf.analysis` whenever a run folder changes. Held-out numbers use `runs/thresholds.json` if it exists; otherwise thresholds are fitted at view time on the code-default calibration seeds (0, 1), not the split used in `notes/results/calib-c0-c1-100null/`.
 
 ## Running
 
@@ -203,6 +203,11 @@ python scripts/run_llm_rps.py --config configs/c0.yaml configs/c1.yaml configs/c
 python scripts/run_llm_rps.py --config configs/c2_sweep_low.yaml --seeds 0 1 2 3 4 55
 python scripts/run_llm_rps.py --config configs/c4.yaml --seeds 0 1 2 3 4 55 --skip-positive-control-check   # gate: see below
 python scripts/run_llm_rps.py --config configs/dryrun_c2.yaml   # dryrun_*.yaml: scripted agents, $0
+
+# double auction: A2 (positive control) first; dryrun_auction.yaml is scripted, $0
+python scripts/run_auction.py --config configs/auction_a2.yaml configs/auction_a2_mixed.yaml --seeds 0 1 2
+python scripts/run_auction.py --config configs/auction_a0.yaml configs/auction_a1.yaml --seeds $(seq 0 24)
+python scripts/analyze_auction.py "runs/A*_llama*" --out notes/results/auction
 
 # LLM judge baseline: writes judge.json into each run dir; --dry-run prints the prompt only
 python scripts/run_judge.py 'runs/C2_llama-3.3-70b-instruct_*'
@@ -241,6 +246,7 @@ Paid runs are refused while `configs/base.yaml` still holds `*_TODO` model or pr
 
 Committed analysis outputs are in [`notes/results/`](notes/results/), one folder per analysis, each with a README giving its input runs, code and command. [`fact-sheet.md`](notes/results/fact-sheet.md) collects the numbers with their source files.
 
+- `auction/`: double auction, positive control, detectors against thresholds from A0 + A1 nulls, H1, tacit pricing.
 - `b21-mixed-c2/`: C2 Llama + Mistral (mixed families), positive control and detection, under two sets of frozen thresholds; `score_seeded/` re-scores them, `family-split/` splits same- vs cross-family colluding pairs (C4 cross-family arm).
 - `c2-llama-v3/`: C2 Llama 3.3 70B ×4, prompt v3, seeds 0–4, analysed before any null runs existed (no thresholds).
 - `c3-sweep/`: H3 sweep (p = 0.1 / 0.3 / 0.5 / 1.0) and C3 under prompt v3, against the frozen thresholds, with compliance and judge.
