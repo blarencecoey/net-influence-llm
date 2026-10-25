@@ -71,3 +71,21 @@ def test_llm_seller_with_fake_client(tmp_path):
     m = au.run_one(cfg, 1, client, tmp_path)
     assert m["completed"] and m["parse_failures"] == 0
     assert m["positive_control"]["match_rate_delivered"] == 1.0
+
+
+def test_viewer_auction_kind_detail_and_summary(tmp_path):
+    from netinf import viewer as v
+
+    m2 = au.run_one(scripted_cfg(n_rounds=120), 0, None, tmp_path)
+    au.run_one(scripted_cfg(condition="A0", n_rounds=120), 1, None, tmp_path)
+    au.run_one(scripted_cfg(n_rounds=20), 2, None, tmp_path)  # smoke-length: left out of summary
+    kinds = {e["id"]: e["kind"] for e in v.list_runs(tmp_path)}
+    assert set(kinds.values()) == {"auction"}
+    d = v.run_detail(tmp_path, m2["run_id"])
+    assert d["kind"] == "auction" and d["true_pair"] is not None
+    assert set(d["detectors"]["by_state"]) == {"prev_price_band", "none", "prev_n_distinct"}
+    assert len(d["rounds"]) == 120 and d["references"]["equilibrium_ask"] == 80
+    s = v.auction_summary(tmp_path)
+    assert sorted(g["condition"] for g in s["groups"]) == ["A0", "A2"]
+    assert len(s["skipped"]) == 1
+    assert v.summary(tmp_path)["n_games"] == 0  # auction runs never enter the RPS overview

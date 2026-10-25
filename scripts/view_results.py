@@ -8,6 +8,7 @@ Routes:
   /                          the page (viewer/index.html)
   /api/summary[?models=M]    overview for one model set (default: the one with most runs; * = all):
                              spend, positive control, detector summary, held-out TPR/FPR
+  /api/auction               double-auction overview (per condition, market series, detection)
   /api/runs                  every run folder with its kind and headline fields
   /api/run/<run_id>          one run (game runs get every detector recomputed)
   /api/detect/<run_id>       a game run's rounds, detectors and status only (polled live by the
@@ -96,6 +97,9 @@ def make_handler(runs_dir: Path, cache: Cache):
                 if path == "/api/summary":
                     return self.send(cache.get(f"summary:{models}",
                                                lambda: v.summary(runs_dir, models)),
+                                     "application/json")
+                if path == "/api/auction":
+                    return self.send(cache.get("auction", lambda: v.auction_summary(runs_dir)),
                                      "application/json")
                 if path == "/api/runs":
                     return self.send(cache.get("runs", lambda: v.list_runs(runs_dir)),

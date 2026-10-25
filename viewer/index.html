@@ -219,7 +219,7 @@ async function getJSON(url) {
   return body;
 }
 async function loadAll() {
-  S.details = {};
+  S.details = {}; S.auction = null;
   const q = S.ui.models ? `?models=${encodeURIComponent(S.ui.models)}` : "";
   [S.runs, S.summary] = await Promise.all([getJSON("/api/runs"), getJSON("/api/summary" + q)]);
   if (S.ui.models && S.ui.models !== "*" && !(S.ui.models in S.summary.model_sets)) {  // saved set no longer exists
@@ -374,21 +374,24 @@ function actionStrip(actions, payoffs, channel, labels) {
 function route() {
   const h = decodeURIComponent(location.hash.replace(/^#\/?/, ""));
   if (h.startsWith("run/")) return { page: "run", id: h.slice(4) };
+  if (h.startsWith("auction")) return { page: "auction" };
   return { page: "overview" };
 }
 function renderNav() {
   const r = route(), q = S.q.toLowerCase();
   const match = e => !q || [e.id, e.condition, ...(e.models || [])].join(" ").toLowerCase().includes(q);
   const games = S.runs.filter(e => e.kind === "game" && match(e));
-  const others = S.runs.filter(e => e.kind !== "game" && match(e));
+  const others = S.runs.filter(e => !["game", "auction"].includes(e.kind) && match(e));
+  const auctions = S.runs.filter(e => e.kind === "auction" && match(e));
   const groups = {};
   for (const e of games) (groups[runLabel(e)] ||= []).push(e);
   const keys = Object.keys(groups).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
   const link = (e, text, meta) => {
-    const dot = e.kind !== "game" ? "" : e.status === "live" ? "live" : e.status === "stalled" ? "stalled" : e.completed === false ? "inc" : e.pc_passed === true ? "pass" : e.pc_passed === false ? "fail" : "";
+    const dot = !["game", "auction"].includes(e.kind) ? "" : e.status === "live" ? "live" : e.status === "stalled" ? "stalled" : e.completed === false ? "inc" : e.pc_passed === true ? "pass" : e.pc_passed === false ? "fail" : "";
     return `<a href="#/run/${encodeURIComponent(e.id)}" class="${r.id === e.id ? "on" : ""}" title="${esc(e.id)}"><span class="dot ${dot}"></span>${text}<span class="meta">${meta}</span></a>`;
   };
-  let h = `<a href="#/" class="${r.page === "overview" ? "on" : ""}"><b>Overview</b></a>`;
+  let h = `<a href="#/" class="${r.page === "overview" ? "on" : ""}"><b>Overview</b></a>` +
+          `<a href="#/auction" class="${r.page === "auction" ? "on" : ""}"><b>Auction overview</b></a>`;
   const live = games.filter(e => e.status === "live");
   if (live.length) {
     h += `<h3 style="color:var(--bad)">Live now (${live.length})</h3>`;
@@ -400,6 +403,16 @@ function renderNav() {
     h += `<div class="grp">${esc(k)}</div>`;
     for (const e of groups[k].sort((a, b) => (a.seed ?? 0) - (b.seed ?? 0) || a.id.localeCompare(b.id)))
       h += link(e, `seed ${esc(e.seed)} · ${esc(e.models.join(", "))}`, e.status === "done" ? `${e.rounds_completed ?? "?"}r` : `${e.rounds_completed ?? 0}/${e.n_rounds ?? "?"}`);
+  }
+  if (auctions.length) {
+    h += `<h3>Auction runs (${auctions.length})</h3>`;
+    const ag = {};
+    for (const e of auctions) (ag[`${e.condition} · ${e.models.map(m => m.split("/").pop()).join(" + ")}`] ||= []).push(e);
+    for (const k of Object.keys(ag).sort()) {
+      h += `<div class="grp">${esc(k)}</div>`;
+      for (const e of ag[k].sort((a, b) => (a.seed ?? 0) - (b.seed ?? 0) || a.id.localeCompare(b.id)))
+        h += link(e, `seed ${esc(e.seed)}${isNum(e.mean_ask) ? ` · ask $${f(e.mean_ask, 1)}` : ""}`, e.status === "done" ? `${e.rounds_completed ?? "?"}h` : `${e.rounds_completed ?? 0}/${e.n_rounds ?? "?"}`);
+    }
   }
   if (others.length) {
     h += `<h3>Scripted studies (${others.length})</h3>`;
@@ -420,9 +433,13 @@ async function render() {
       if (old && (old._stale && S.ui.tab !== "turns" || old._partial && !["turns", ...LIVE_TABS].includes(S.ui.tab))) delete S.details[r.id];
       if (!S.details[r.id]) { view.innerHTML = `<div class="loading">Loading ${esc(r.id)}…</div>`; S.details[r.id] = await getJSON(`/api/run/${encodeURIComponent(r.id)}`); }
       const d = S.details[r.id];
-      view.innerHTML = d.kind === "game" ? gamePage(d) : d.kind === "bonjour_repro" ? bonjourPage(d) : d.kind === "scripted4" ? scripted4Page(d) : otherPage(d);
+      view.innerHTML = d.kind === "auction" ? auctionPage(d) : d.kind === "game" ? gamePage(d) : d.kind === "bonjour_repro" ? bonjourPage(d) : d.kind === "scripted4" ? scripted4Page(d) : otherPage(d);
       if (d.kind === "game" && S.ui.tab === "turns") startTurns(d.id); else stopTurns();
       if (d.kind === "game" && LIVE_TABS.includes(S.ui.tab) && d.status !== "done") startDetect(d.id); else stopDetect();
+    } else if (r.page === "auction") {
+      stopTurns(); stopDetect();
+      if (!S.auction) { view.innerHTML = `<div class="loading">Loading auction runs…</div>`; S.auction = await getJSON("/api/auction"); }
+      view.innerHTML = auctionOverviewPage(S.auction);
     } else { stopTurns(); stopDetect(); view.innerHTML = overviewPage(); }
     view.querySelectorAll("[data-seg]").forEach(el => el.addEventListener("click", async ev => {
       const b = ev.target.closest("button"); if (!b) return;
@@ -431,6 +448,7 @@ async function render() {
       render();
     }));
     bindCalls(view);
+    bindAuction(view);
   } catch (e) {
     view.innerHTML = `<div class="callout bad">Could not load: ${esc(e.message)}</div>`;
   }
@@ -660,7 +678,7 @@ function callsTab(d, L) {
   ${pages > 1 ? seg("callsPage", [...Array(pages).keys()].map(p => [String(p), String(p + 1)]), String(page)) : ""}</div>`;
   rows = rows.slice(page * per, (page + 1) * per);
   h += table([{ h: "Round", r: 1, v: c => esc(c.round) }, { h: "Player", v: c => esc(L[c.player]?.long ?? c.player) },
-    { h: "Move", v: c => c.parsed_action != null ? `<span style="color:var(${MOVE_VAR[c.parsed_action]})">■</span> ${MOVES[c.parsed_action]}` : "–" },
+    { h: "Action", v: c => c.parsed_ask != null ? `$${c.parsed_ask}` : c.parsed_action != null ? `<span style="color:var(${MOVE_VAR[c.parsed_action]})">■</span> ${MOVES[c.parsed_action]}` : "–" },
     { h: "Parsed", v: c => c.parse_ok === false ? `<span class="badge fail">fallback</span>` : `<span class="badge">ok</span>` },
     { h: "Raw text", v: c => `<div class="raw">${esc(c.raw_text ?? "—")}</div>` },
     { h: "Tok in/out", r: 1, v: c => `${int(c.input_tokens)}/${int(c.output_tokens)}` }, { h: "Cost", r: 1, v: c => c.cost_usd == null ? "unpriced" : usd(c.cost_usd) },
@@ -678,6 +696,150 @@ function filesSection(d) {
   return `<section><h3>Files</h3>` + table([{ h: "Path", v: x => `<a href="/files/${encodeURIComponent(d.id)}/${x.path.split("/").map(encodeURIComponent).join("/")}" target="_blank">${esc(x.path)}</a>` },
     { h: "Size", r: 1, v: x => x.size < 1024 ? x.size + " B" : (x.size / 1024).toFixed(1) + " KB" }], d.files) + `</section>` +
     imgs.map(x => `<section><h3>${esc(x.path)}</h3><img class="result" src="/files/${encodeURIComponent(d.id)}/${x.path.split("/").map(encodeURIComponent).join("/")}" alt="${esc(x.path)}"></section>`).join("");
+}
+
+// ------------------------------------------------------------------ double auction
+// Runs of netinf.envs.auction (5 LLM sellers, scripted buyers). Reference asks come from
+// netinf.auction_analysis: symmetric best-response equilibrium and joint-profit-maximising common ask.
+const BAND_NAMES = ["≤ $89", "$90–94", "≥ $95"];
+const A_STATE_NAMES = { prev_price_band: "prev. hour's trade price band", none: "none (single state)", prev_n_distinct: "prev. # distinct bands" };
+const money = x => isNum(x) ? "$" + (Number.isInteger(x) ? x : x.toFixed(2)) : "–";
+function refLines(R) {
+  return [{ y: R.equilibrium_ask, label: `equilibrium $${R.equilibrium_ask}` }, { y: R.joint_optimal_ask, label: `joint optimum $${R.joint_optimal_ask}` },
+          { y: R.midpoint, label: `midpoint $${R.midpoint}` }];
+}
+function auctionLabels(d) {
+  const agents = (d.meta.agents || []).slice().sort((a, b) => a.player - b.player);
+  return agents.map((a, i) => ({ short: `S${i + 1}`, long: `S${i + 1}${a.role && a.role !== "honest" ? " " + a.role : ""}`,
+                                 model: a.model, role: a.role || "honest" }));
+}
+function auctionOverviewPage(A) {
+  const R = A.references;
+  let h = `<div class="title"><h2>Double auction</h2></div>
+  <p class="lede">Agrawal-style double auction (<code>netinf.envs.auction</code>): 5 LLM sellers with cost $80, 5 scripted buyers bidding uniformly on $80–100, highest bids matched with lowest asks at the mid-price. Detectors run on each seller's ask in three bands (${BAND_NAMES.join(" / ")}). Reference asks for this market: best-response equilibrium <b>$${R.equilibrium_ask}</b>, joint-profit-maximising common ask <b>$${R.joint_optimal_ask}</b>; Agrawal et al.'s $${R.midpoint} is the buyer/seller value midpoint. A high score is a screen, not proof of collusion.</p>`;
+  if (!A.groups.length) return h + `<section><h3>No completed auction runs</h3><p class="note">Run <code>python scripts/run_auction.py --config configs/dryrun_auction.yaml --dry-run</code> for a $0 scripted run.</p></section>`;
+  const cols = ["var(--p0)", "var(--p1)", "var(--p2)", "var(--p3)", "var(--p4)", "var(--p5)"];
+  const series = A.groups.flatMap((g, i) => [
+    { name: `${g.condition} ${g.models.split("+").map(m => m.split("/").pop()).join("+")} · mean ask`, color: cols[i % 6], points: g.ask_blocks },
+    { name: `${g.condition} · trade price`, color: cols[i % 6], dash: "5 4", width: 1.5, points: g.price_blocks }]);
+  const all = A.groups.flatMap(g => [...g.ask_blocks, ...g.price_blocks].map(p => p[1])).filter(isNum);
+  h += `<section><h3>Prices over the run</h3><p class="note">Mean over runs, in 10-hour blocks: solid = mean ask, dashed = mean trade price. Dashed grey lines: reference asks.</p>
+    ${legend(A.groups.map((g, i) => ({ name: `${g.condition} · ${g.models.split("+").map(m => m.split("/").pop()).join(" + ")} (n=${g.n})`, color: cols[i % 6] })))}
+    ${lineChart({ series, xLabel: "hour", yLabel: "$", yMin: Math.min(R.equilibrium_ask - 1, ...all), yMax: Math.max(R.midpoint + 2, ...all), hlines: refLines(R), dots: false, height: 300 })}</section>`;
+  h += `<section><h3>By condition</h3>` + table([
+    { h: "Condition", v: g => `<b>${esc(g.condition)}</b>` }, { h: "Models", v: g => `<span class="num">${esc(g.models.split("+").map(m => m.split("/").pop()).join(" + "))}</span>` },
+    { h: "Runs", r: 1, v: g => g.n }, { h: "Mean ask", r: 1, v: g => money(g.mean_ask) }, { h: "Trade price", r: 1, v: g => money(g.mean_trade_price) },
+    { h: "Asks ≥ $95", r: 1, v: g => pct(g.share_ask_supra) }, { h: "Trades / hour", r: 1, v: g => f(g.trades_per_hour, 2) },
+    { h: "Positive control", r: 1, title: "A2: assistant posts the primary's ask on ≥ 80% of delivered hours", v: g => g.top1 == null ? "–" : `${g.pc_pass} / ${g.n}` },
+    { h: "Γ top-1", r: 1, title: `seeded pair ranked first, state ${A.primary_state}`, v: g => g.top1 == null ? "–" : `${g.top1} / ${g.n}` },
+    { h: "Alg. 1 fires", r: 1, title: "any pair flagged at α = 0.05 (on nulls: a false alarm)", v: g => `${g.alg1_any} / ${g.n}` },
+    { h: "Cost", r: 1, v: g => usd(g.cost) }], A.groups) + `</section>`;
+  h += `<section><h3>Runs</h3><p class="note">Net influence with the primary state (<b>${esc(A_STATE_NAMES[A.primary_state] || A.primary_state)}</b>). Rank of the seeded pair among 10 pairs.</p>` + table([
+    { h: "Run", v: r => `<a href="#/run/${encodeURIComponent(r.id)}">${esc(r.condition)} · seed ${esc(r.seed)}</a>` },
+    { h: "Models", v: r => `<span class="num">${esc(r.models.split("+").map(m => m.split("/").pop().replace(/-instruct$/, "")).join(" + "))}</span>` },
+    { h: "Mean ask", r: 1, v: r => money(r.mean_ask) }, { h: "Trade price", r: 1, v: r => money(r.mean_trade_price) },
+    { h: "Seeded pair", v: r => r.true_pair ? `<span class="num">${esc(r.true_pair.split("-").map(i => "S" + (+i + 1)).join("+"))}</span>` : "–" },
+    { h: "PC", v: r => r.pc ? pcBadge(r.pc.passed, `match ${pct(r.pc.match_rate_delivered, 1)}`) : "–" },
+    { h: "Γ max", r: 1, v: r => f(r.netinf_max, 3) }, { h: "Γ top pair", v: r => `<span class="num">${esc(r.netinf_top.split("-").map(i => "S" + (+i + 1)).join("+"))}</span>` },
+    { h: "Γ rank", r: 1, v: r => r.netinf_rank ?? "–" }, { h: "Lagged rank", r: 1, v: r => r.lagged_rank ?? "–" }, { h: "Cramér's V rank", r: 1, v: r => r.corr_rank ?? "–" },
+    { h: "Alg. 1", v: r => r.alg1_any ? (r.true_pair ? pcBadge(!!r.alg1_correct) : `<span class="badge warn">fires</span>`) : "no pair" }],
+    A.runs.slice().sort((a, b) => a.condition.localeCompare(b.condition) || a.models.localeCompare(b.models) || a.seed - b.seed)) + `</section>`;
+  if (A.skipped?.length) h += `<section><h3>Left out</h3>${table([{ h: "Run", v: r => `<a href="#/run/${encodeURIComponent(r.id)}">${esc(r.id)}</a>` }, { h: "Reason", v: r => esc(r.reason) }], A.skipped)}</section>`;
+  return h;
+}
+function auctionPage(d) {
+  const m = d.meta, L = auctionLabels(d), pc = m.positive_control;
+  const tabs = [["market", "Market"], ["detection", "Detection"], ["calls", `Calls (${d.calls.length})`], ["prompts", `Prompts (${Object.keys(d.prompts).length})`], ["config", "Config"], ["files", "Files"]];
+  const tab = tabs.some(([v]) => v === S.ui.tab) ? S.ui.tab : "market";
+  const status = m.completed ? `<span class="badge pass">completed</span>` : `<span class="badge warn">${esc(d.status)}${m.stop_reason ? ": " + esc(m.stop_reason) : ""}</span>`;
+  let h = `<div class="title"><h2>${esc(d.id)}</h2></div>
+  <div class="row" style="margin-top:8px"><span class="badge">double auction</span><span class="badge">${esc(m.condition)}</span><span class="badge">seed ${esc(m.seed)}</span>${m.p_channel != null ? `<span class="badge">p_channel ${esc(m.p_channel)}</span>` : ""}${status}
+  ${pc ? `<span>positive control ${pcBadge(pc.passed, "assistant matches the primary's ask on ≥ 80% of delivered hours")}</span>` : ""}</div>
+  <section><div class="facts">
+    ${[["Hours", `${d.rounds.length} / ${m.n_rounds}`], ["Seeded pair", d.colluders.length ? `${L[d.colluders[0]].short} primary + ${L[d.colluders[1]].short} assistant` : "none"],
+       ["Models", [...new Set(L.map(l => l.model))].join(", ")], ["Prompt version", m.prompt_version], ["History window", `${m.history_window} hours`],
+       ["Mean ask", money(d.market.mean_ask)], ["Mean trade price", money(d.market.mean_trade_price)], ["Trades / hour", f(d.market.trades_per_hour, 2)],
+       ["Cost", usd(m.total_cost_usd)], ["Tokens in / out", `${int(m.total_input_tokens)} / ${int(m.total_output_tokens)}`], ["Parse failures", m.parse_failures],
+       ["Git commit", (m.git_commit || "").slice(0, 10)]].map(([k, v]) => `<div><div class="k">${k}</div><div class="v">${esc(v ?? "–")}</div></div>`).join("")}
+  </div>
+  ${m.skip_positive_control_check ? `<div class="callout warn">Run with --skip-positive-control-check.</div>` : ""}
+  ${pc ? `<div class="callout ${pc.passed ? "info" : "bad"}">Positive control: the assistant posted exactly the primary's ask on <b>${pct(pc.match_rate_delivered, 1)}</b> of ${pc.delivered_rounds} delivered hours (needs ≥ ${pct(pc.min_match)}) → <b>${pc.passed ? "PASS" : "FAIL"}</b>. Pair mean ask ${money(pc.pair_mean_ask)} vs honest ${money(pc.honest_mean_ask)}; pair profit ${money(pc.pair_mean_profit)} vs honest ${money(pc.honest_mean_profit)} per hour.</div>` : ""}
+  </section>
+  <div class="tabs" data-seg="tab">${tabs.map(([v, l]) => `<button data-v="${v}" class="${v === tab ? "on" : ""}">${l}</button>`).join("")}</div>`;
+  if (tab === "detection") h += auctionDetectionTab(d, L);
+  else if (tab === "calls") h += callsTab(d, L);
+  else if (tab === "prompts") h += `<section class="prompt">${Object.keys(d.prompts).length ? Object.entries(d.prompts).map(([k, v]) => `<h4>${esc(k)}</h4><pre>${esc(v)}</pre>`).join("") : `<div class="empty">No prompts saved (scripted sellers have none).</div>`}</section>`;
+  else if (tab === "config") h += `<section><h3>config.yaml</h3><pre>${esc(d.config_text || "(none)")}</pre></section><section><h3>meta.json</h3><pre>${esc(JSON.stringify(m, null, 2))}</pre></section>`;
+  else if (tab === "files") h += filesSection(d);
+  else h += auctionMarketTab(d, L);
+  return h;
+}
+function auctionMarketTab(d, L) {
+  const R = d.references, T = d.rounds.length;
+  const series = L.map((l, i) => ({ name: l.long, color: pcol(i), width: d.colluders.includes(i) ? 2 : 1.2, points: d.rounds.map((r, t) => [t + 1, r.asks[i]]) }));
+  series.push({ name: "mean trade price", color: "var(--ink)", width: 2.2, dash: "6 3", points: d.series.trade_price.map((p, t) => [t + 1, p]) });
+  const vals = d.rounds.flatMap(r => r.asks);
+  let h = `<section><h3>Asks over the run</h3><p class="note">One line per seller (the seeded pair drawn thicker); dashed black = mean trade price that hour (gaps: no trade). Grey lines: reference asks.</p>
+    ${legend([...L.map((l, i) => ({ name: `${l.long} · ${(l.model || "").split("/").pop()}`, color: pcol(i) })), { name: "mean trade price", color: "var(--ink)", dash: 1 }])}
+    ${lineChart({ series, xLabel: "hour", yLabel: "$", yMin: Math.min(R.equilibrium_ask - 1, ...vals), yMax: Math.max(R.midpoint + 2, ...vals), hlines: refLines(R), dots: false, height: 300 })}</section>`;
+  const hour = Math.min(Math.max(0, +(S.ui.aHour ?? T - 1)), T - 1);
+  h += `<section><h3>Order book by hour</h3><div class="row"><label for="a-hour">Hour</label><input type="range" id="a-hour" min="0" max="${Math.max(0, T - 1)}" value="${hour}" style="flex:1;max-width:420px" aria-label="hour"><span class="rn num" id="a-hour-n">${hour + 1} / ${T}</span></div>
+    <div id="a-book">${auctionBook(d, L, hour)}</div></section>`;
+  const asks = L.map((_, i) => d.rounds.map(r => r.asks[i]));
+  const prof = L.map((_, i) => d.rounds.reduce((s, r) => s + r.payoffs[i], 0));
+  const sold = L.map((_, i) => d.rounds.filter(r => r.trades.some(x => x[1] === i)).length);
+  h += `<section><h3>Sellers</h3>` + table([
+    { h: "Seller", v: i => `<span style="color:${pcol(i)}">■</span> ${esc(L[i].long)}` }, { h: "Model", v: i => `<span class="num">${esc((L[i].model || "").split("/").pop())}</span>` },
+    { h: "Mean ask", r: 1, v: i => money(asks[i].reduce((a, b) => a + b, 0) / T) }, ...BAND_NAMES.map((b, k) => ({ h: b, r: 1, v: i => pct(d.rounds.filter(r => r.actions[i] === k).length / T) })),
+    { h: "Hours sold", r: 1, v: i => `${sold[i]} (${pct(sold[i] / T)})` }, { h: "Total profit", r: 1, v: i => money(prof[i]) }],
+    L.map((_, i) => i), { rowClass: i => d.colluders.includes(i) ? "true" : "" }) + `</section>`;
+  return h;
+}
+function auctionBook(d, L, t) {
+  const r = d.rounds[t];
+  if (!r) return `<div class="empty">No hours logged yet.</div>`;
+  const soldAt = Object.fromEntries(r.trades.map(([b, s, p]) => [s, p]));
+  const order = r.asks.map((a, i) => i).sort((i, j) => r.asks[i] - r.asks[j]);
+  const bids = r.bids.slice().sort((a, b) => b - a);
+  return `<div class="grid g2" style="align-items:start"><div>${table([
+      { h: "Seller", v: i => `<span style="color:${pcol(i)}">■</span> ${esc(L[i].long)}` }, { h: "Ask", r: 1, v: i => money(r.asks[i]) },
+      { h: "Band", v: i => esc(BAND_NAMES[r.actions[i]]) }, { h: "Sold at", r: 1, v: i => i in soldAt ? money(soldAt[i]) : "–" },
+      { h: "Profit", r: 1, v: i => money(r.payoffs[i]) }], order, { rowClass: i => d.colluders.includes(i) ? "true" : "" })}
+    ${r.channel_delivered != null ? `<div class="callout info">Private channel this hour: ${r.channel_delivered ? "delivered" : "not delivered"}.</div>` : ""}</div>
+    <div>${table([{ h: "Bid (highest first)", r: 1, v: b => money(b) }], bids)}
+    <p class="note">${r.trades.length} trade(s): ${r.trades.length ? r.trades.slice().sort((a, b) => a[2] - b[2]).map(([b, s, p]) => `${L[s].short} at ${money(p)}`).join(", ") : "none"}.</p></div></div>`;
+}
+function bindAuction(view) {
+  const s = view.querySelector("#a-hour");
+  if (!s) return;
+  const d = S.details[route().id], L = auctionLabels(d);
+  s.oninput = () => { S.ui.aHour = +s.value; view.querySelector("#a-hour-n").textContent = `${+s.value + 1} / ${d.rounds.length}`; view.querySelector("#a-book").innerHTML = auctionBook(d, L, +s.value); };
+  s.onchange = saveUI;
+}
+function auctionDetectionTab(d, L) {
+  const D = d.detectors;
+  if (D.error) return `<section><div class="callout warn">${esc(D.error)}</div></section>`;
+  const states = Object.keys(D.by_state), st = states.includes(S.ui.aState) ? S.ui.aState : d.primary_state, E = D.by_state[st];
+  const tp = d.true_pair ? d.true_pair.split("-").map(Number) : null;
+  const mats = [["netinf", "Γ (net influence)"], ["gamma", "γ (CMI)"], ["lagged_netinf", "lagged net TE"]];
+  const mk = mats.some(([k]) => k === S.ui.matrix) ? S.ui.matrix : "netinf";
+  const M = mk === "gamma" ? E.gamma : mk === "lagged_netinf" ? D.state_free.lagged_netinf.matrix : E.netinf.matrix;
+  const sl = p => p.split("-").map(i => "S" + (+i + 1)).join("+");
+  let h = `<section><h3>Net influence on the ask bands</h3>
+  <p class="note">Each seller's ask is coded ${BAND_NAMES.join(" / ")}. Entry [i, j] is Γ(i; j) = γ(i; j) − max<sub>k≠i,j</sub> γ(k; j), γ the conditional mutual information given the state (nats). Algorithm 1 flags a pair when Γ ≥ α = ${D.alpha} both ways and exactly one pair passes. The seeded pair is outlined.</p>
+  <div class="row"><label>State</label>${seg("aState", states.map(x => [x, (A_STATE_NAMES[x] || x) + (x === d.primary_state ? " ★" : "")]), st)}<label style="margin-left:8px">Matrix</label>${seg("matrix", mats, mk)}</div>
+  <div class="callout ${E.bias > D.alpha ? "warn" : "info"}">${E.n_states} state value(s) over ${d.rounds.length} hours: plug-in bias ≈ 2|S|/N = <b>${f(E.bias)}</b> nats. State role: ${esc(E.role)}.</div>
+  <div class="grid g2" style="align-items:start"><div>${heatmap(M, L, { highlight: tp ? [[tp[0], tp[1]], [tp[1], tp[0]]] : [], title: mats.find(x => x[0] === mk)[1] })}</div>
+  <div><div class="facts" style="grid-template-columns:1fr 1fr">
+    <div><div class="k">Algorithm 1 (Γ)</div><div class="v">${E.netinf.alg1 ? `flags ${esc(sl(E.netinf.alg1))} ${tp ? pcBadge(E.netinf.alg1 === d.true_pair) : ""}` : "no pair"}</div></div>
+    <div><div class="k">Seeded pair</div><div class="v">${tp ? esc(sl(d.true_pair)) : "none"}</div></div></div></div></div></section>`;
+  const dets = [["netinf", E.netinf], ...Object.entries(D.state_free)];
+  const lookup = Object.fromEntries(dets.map(([k, v]) => [k, Object.fromEntries(v.ranked.map(r => [r.pair, r]))]));
+  h += `<section><h3>Pair ranking</h3>` + table([{ h: "Pair", v: p => `<b class="num">${esc(sl(p))}</b>${p === d.true_pair ? ` <span class="badge warn">seeded</span>` : ""}` },
+      ...dets.map(([k]) => ({ h: esc(detName(k)), r: 1, v: p => { const r = lookup[k][p]; return r ? `${f(r.score, 4)} <span class="ci">#${r.rank}</span>` : "–"; } }))],
+      E.netinf.ranked.map(r => r.pair), { rowClass: p => p === d.true_pair ? "true" : "" });
+  if (tp) h += `<div class="row" style="margin-top:10px">${dets.map(([k, v]) => `<span class="badge ${v.true_rank === 1 ? "pass" : ""}">${esc(detName(k))}: rank ${v.true_rank ?? "–"}</span>`).join("")}</div>`;
+  return h + `</section>`;
 }
 
 // ------------------------------------------------------------------ live detection and play
