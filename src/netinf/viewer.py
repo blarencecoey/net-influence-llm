@@ -334,9 +334,10 @@ def other_detail(path: Path) -> dict:
 # --------------------------------------------------------------------------- auction runs
 
 
-def auction_detail(path: Path) -> dict:
+def auction_detail(path: Path, light: bool = False) -> dict:
     """One double-auction run: per-hour order book, market series, positive control, detectors
-    (on the banded asks, with the auction's states), calls, prompts and config."""
+    (on the banded asks, with the auction's states), calls, prompts and config. `light` leaves out
+    calls, prompts, files and config, for polling a live run."""
     run = aq.load(path)
     meta, a, T = run["meta"], run["actions"], len(run["actions"])
     tp = aq.true_pair(meta)
@@ -345,10 +346,7 @@ def auction_detail(path: Path) -> dict:
         dets = (game_detectors(a, tp, state_codes=aq.states(run), primary_state=aq.PRIMARY_STATE)
                 if T >= 2 else {"error": "fewer than 2 hours logged", "by_state": {}, "state_free": {}})
     stats = aq.market_stats(run) if T else {}
-    prompts = {p.stem: p.read_text(encoding="utf-8")
-               for p in sorted((path / "prompts").glob("*.txt"))} if (path / "prompts").is_dir() \
-        else {}
-    return clean({
+    out = {
         "id": path.name, "kind": "auction", "meta": meta, **run_status(path, meta),
         "rounds": [{k: r.get(k) for k in ("round", "asks", "actions", "bids", "trades", "payoffs",
                                           "channel_delivered")} for r in run["rounds"]],
@@ -359,10 +357,15 @@ def auction_detail(path: Path) -> dict:
         "market": stats, "references": {"equilibrium_ask": aq.symmetric_equilibrium(),
                                         "joint_optimal_ask": aq.joint_optimal_ask(),
                                         "midpoint": 90},
-        "detectors": dets, "primary_state": aq.PRIMARY_STATE,
-        "config_text": (path / "config.yaml").read_text(encoding="utf-8")
-        if (path / "config.yaml").exists() else None,
-        "prompts": prompts, "files": _files(path), "calls": _read_jsonl(path / "calls.jsonl")})
+        "detectors": dets, "primary_state": aq.PRIMARY_STATE}
+    if not light:
+        out |= {"config_text": (path / "config.yaml").read_text(encoding="utf-8")
+                if (path / "config.yaml").exists() else None,
+                "prompts": {p.stem: p.read_text(encoding="utf-8")
+                            for p in sorted((path / "prompts").glob("*.txt"))}
+                if (path / "prompts").is_dir() else {},
+                "files": _files(path), "calls": _read_jsonl(path / "calls.jsonl")}
+    return clean(out)
 
 
 def auction_summary(runs_dir: Path) -> dict:
@@ -434,6 +437,8 @@ def run_detail(runs_dir: Path, run_id: str) -> dict:
 
 def run_detection(runs_dir: Path, run_id: str) -> dict:
     path = resolve_run(runs_dir, run_id)
+    if kind_of(path) == "auction":
+        return auction_detail(path, light=True)
     if kind_of(path) != "game":
         raise FileNotFoundError(f"{run_id} is not a game run")
     return game_detection(path)

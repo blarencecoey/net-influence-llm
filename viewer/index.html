@@ -392,10 +392,10 @@ function renderNav() {
   };
   let h = `<a href="#/" class="${r.page === "overview" ? "on" : ""}"><b>Overview</b></a>` +
           `<a href="#/auction" class="${r.page === "auction" ? "on" : ""}"><b>Auction overview</b></a>`;
-  const live = games.filter(e => e.status === "live");
+  const live = [...games, ...auctions].filter(e => e.status === "live");
   if (live.length) {
     h += `<h3 style="color:var(--bad)">Live now (${live.length})</h3>`;
-    for (const e of live) h += link(e, `${esc(runLabel(e))} · seed ${esc(e.seed)}`, `${e.rounds_completed ?? 0}/${e.n_rounds ?? "?"}`);
+    for (const e of live) h += link(e, `${e.kind === "auction" ? "auction " : ""}${esc(runLabel(e))} · seed ${esc(e.seed)}`, `${e.rounds_completed ?? 0}/${e.n_rounds ?? "?"}`);
   }
   h += `<h3>Game runs (${games.length})</h3>`;
   if (!games.length) h += `<div class="grp">none</div>`;
@@ -427,7 +427,7 @@ async function render() {
   try {
     if (r.page === "run") {
       const ent = S.runs.find(e => e.id === r.id);
-      if (r.id !== S.lastRun && ent?.status === "live") S.ui.tab = "turns";  // opening a live run: watch it
+      if (r.id !== S.lastRun && ent?.status === "live") S.ui.tab = ent.kind === "auction" ? "market" : "turns";  // opening a live run: watch it
       S.lastRun = r.id;
       const old = S.details[r.id];  // _stale: rounds arrived in Turns; _partial: only detection fields are current
       if (old && (old._stale && S.ui.tab !== "turns" || old._partial && !["turns", ...LIVE_TABS].includes(S.ui.tab))) delete S.details[r.id];
@@ -435,7 +435,7 @@ async function render() {
       const d = S.details[r.id];
       view.innerHTML = d.kind === "auction" ? auctionPage(d) : d.kind === "game" ? gamePage(d) : d.kind === "bonjour_repro" ? bonjourPage(d) : d.kind === "scripted4" ? scripted4Page(d) : otherPage(d);
       if (d.kind === "game" && S.ui.tab === "turns") startTurns(d.id); else stopTurns();
-      if (d.kind === "game" && LIVE_TABS.includes(S.ui.tab) && d.status !== "done") startDetect(d.id); else stopDetect();
+      if (["game", "auction"].includes(d.kind) && LIVE_TABS.includes(S.ui.tab) && d.status !== "done") startDetect(d.id); else stopDetect();
     } else if (r.page === "auction") {
       stopTurns(); stopDetect();
       if (!S.auction) { view.innerHTML = `<div class="loading">Loading auction runs…</div>`; S.auction = await getJSON("/api/auction"); }
@@ -750,7 +750,8 @@ function auctionOverviewPage(A) {
 function auctionPage(d) {
   const m = d.meta, L = auctionLabels(d), pc = m.positive_control;
   const tabs = [["market", "Market"], ["detection", "Detection"], ["calls", `Calls (${d.calls.length})`], ["prompts", `Prompts (${Object.keys(d.prompts).length})`], ["config", "Config"], ["files", "Files"]];
-  const tab = tabs.some(([v]) => v === S.ui.tab) ? S.ui.tab : "market";
+  if (!tabs.some(([v]) => v === S.ui.tab)) S.ui.tab = "market";
+  const tab = S.ui.tab;
   const status = m.completed ? `<span class="badge pass">completed</span>` : `<span class="badge warn">${esc(d.status)}${m.stop_reason ? ": " + esc(m.stop_reason) : ""}</span>`;
   let h = `<div class="title"><h2>${esc(d.id)}</h2></div>
   <div class="row" style="margin-top:8px"><span class="badge">double auction</span><span class="badge">${esc(m.condition)}</span><span class="badge">seed ${esc(m.seed)}</span>${m.p_channel != null ? `<span class="badge">p_channel ${esc(m.p_channel)}</span>` : ""}${status}
@@ -759,7 +760,9 @@ function auctionPage(d) {
     ${[["Hours", `${d.rounds.length} / ${m.n_rounds}`], ["Seeded pair", d.colluders.length ? `${L[d.colluders[0]].short} primary + ${L[d.colluders[1]].short} assistant` : "none"],
        ["Models", [...new Set(L.map(l => l.model))].join(", ")], ["Prompt version", m.prompt_version], ["History window", `${m.history_window} hours`],
        ["Mean ask", money(d.market.mean_ask)], ["Mean trade price", money(d.market.mean_trade_price)], ["Trades / hour", f(d.market.trades_per_hour, 2)],
-       ["Cost", usd(m.total_cost_usd)], ["Tokens in / out", `${int(m.total_input_tokens)} / ${int(m.total_output_tokens)}`], ["Parse failures", m.parse_failures],
+       // the harness writes totals into meta.json when the run finishes
+       ["Cost", m.finished_at ? usd(m.total_cost_usd) : "at finish"], ["Tokens in / out", m.finished_at ? `${int(m.total_input_tokens)} / ${int(m.total_output_tokens)}` : "at finish"],
+       ["Parse failures", m.finished_at ? m.parse_failures : "at finish"],
        ["Git commit", (m.git_commit || "").slice(0, 10)]].map(([k, v]) => `<div><div class="k">${k}</div><div class="v">${esc(v ?? "–")}</div></div>`).join("")}
   </div>
   ${m.skip_positive_control_check ? `<div class="callout warn">Run with --skip-positive-control-check.</div>` : ""}
@@ -782,8 +785,11 @@ function auctionMarketTab(d, L) {
   let h = `<section><h3>Asks over the run</h3><p class="note">One line per seller (the seeded pair drawn thicker); dashed black = mean trade price that hour (gaps: no trade). Grey lines: reference asks.</p>
     ${legend([...L.map((l, i) => ({ name: `${l.long} · ${(l.model || "").split("/").pop()}`, color: pcol(i) })), { name: "mean trade price", color: "var(--ink)", dash: 1 }])}
     ${lineChart({ series, xLabel: "hour", yLabel: "$", yMin: Math.min(R.equilibrium_ask - 1, ...vals), yMax: Math.max(R.midpoint + 2, ...vals), hlines: refLines(R), dots: false, height: 300 })}</section>`;
-  const hour = Math.min(Math.max(0, +(S.ui.aHour ?? T - 1)), T - 1);
-  h += `<section><h3>Order book by hour</h3><div class="row"><label for="a-hour">Hour</label><input type="range" id="a-hour" min="0" max="${Math.max(0, T - 1)}" value="${hour}" style="flex:1;max-width:420px" aria-label="hour"><span class="rn num" id="a-hour-n">${hour + 1} / ${T}</span></div>
+  const live = d.status !== "done", follow = live && S.ui.aFollow !== false;
+  const hour = follow ? T - 1 : Math.min(Math.max(0, +(S.ui.aHour ?? T - 1)), T - 1);
+  if (live) h = `<div class="callout warn"><span class="dot live" style="display:inline-block;margin-right:6px;vertical-align:1px"></span><b>Live:</b> hour ${T} of ${d.meta.n_rounds}. This tab re-reads the run every 1.5 s; the Detection tab does too.</div>` + h;
+  h += `<section><h3>Order book by hour</h3><div class="row"><label for="a-hour">Hour</label><input type="range" id="a-hour" min="0" max="${Math.max(0, T - 1)}" value="${hour}" style="flex:1;max-width:420px" aria-label="hour"><span class="rn num" id="a-hour-n">${hour + 1} / ${T}</span>
+    ${live ? `<label title="stay on the newest hour as hours are logged"><input type="checkbox" id="a-follow" ${follow ? "checked" : ""}> follow live</label>` : ""}</div>
     <div id="a-book">${auctionBook(d, L, hour)}</div></section>`;
   const asks = L.map((_, i) => d.rounds.map(r => r.asks[i]));
   const prof = L.map((_, i) => d.rounds.reduce((s, r) => s + r.payoffs[i], 0));
@@ -813,7 +819,9 @@ function bindAuction(view) {
   const s = view.querySelector("#a-hour");
   if (!s) return;
   const d = S.details[route().id], L = auctionLabels(d);
-  s.oninput = () => { S.ui.aHour = +s.value; view.querySelector("#a-hour-n").textContent = `${+s.value + 1} / ${d.rounds.length}`; view.querySelector("#a-book").innerHTML = auctionBook(d, L, +s.value); };
+  const fl = view.querySelector("#a-follow");
+  if (fl) fl.onchange = () => { S.ui.aFollow = fl.checked; saveUI(); render(); };
+  s.oninput = () => { S.ui.aHour = +s.value; if (fl && fl.checked && +s.value < d.rounds.length - 1) { fl.checked = false; S.ui.aFollow = false; } view.querySelector("#a-hour-n").textContent = `${+s.value + 1} / ${d.rounds.length}`; view.querySelector("#a-book").innerHTML = auctionBook(d, L, +s.value); };
   s.onchange = saveUI;
 }
 function auctionDetectionTab(d, L) {
@@ -846,7 +854,7 @@ function auctionDetectionTab(d, L) {
 // While the Detection or Play tab is open on an unfinished run, polls /api/detect (rounds,
 // detectors and status only; the server recomputes them when the run folder changes) and merges the
 // result into the loaded run, so the tab follows the run round by round. Stops after the run is done.
-const LIVE_TABS = ["detection", "play"];
+const LIVE_TABS = ["detection", "play", "market"];  // market: auction runs
 const DP = { id: null, timer: null, busy: false };
 const liveNote = d => d.status !== "done" ? ` <b>Run in progress:</b> everything on this tab is recomputed on the ${d.rounds.actions.length} round(s) logged so far and updates as each new round is logged.` : "";
 function stopDetect() { clearTimeout(DP.timer); DP.id = null; }
@@ -859,7 +867,8 @@ async function pollDetect() {
   try {
     const fresh = await getJSON(`/api/detect/${encodeURIComponent(id)}`), d = S.details[id];
     status = fresh.status;
-    const changed = d && (fresh.rounds.actions.length !== d.rounds.actions.length || fresh.status !== d.status);
+    const nR = x => Array.isArray(x.rounds) ? x.rounds.length : x.rounds.actions.length;  // auction rounds are a list
+    const changed = d && (nR(fresh) !== nR(d) || fresh.status !== d.status);
     if (DP.id === id && changed) {
       Object.assign(d, fresh, { _partial: true });  // calls, prompts and files are now behind
       delete d._stale;

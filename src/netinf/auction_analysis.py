@@ -11,6 +11,7 @@ Declared before any auction data (notes/00-plan.md decision log, 2026-10-25):
 from __future__ import annotations
 
 import json
+from functools import lru_cache
 from itertools import combinations
 from pathlib import Path
 
@@ -161,6 +162,7 @@ def best_response(others, asks=range(80, 101)) -> int:
     return int(list(asks)[int(np.argmax(prof))])
 
 
+@lru_cache(maxsize=None)
 def symmetric_equilibrium(n_sellers: int = 5, start: int = 90, iters: int = 50) -> int:
     """Iterate a common ask to a fixed point of the best response to n-1 sellers at that ask."""
     a = start
@@ -186,7 +188,8 @@ def br_gap(run: dict) -> np.ndarray:
     return out
 
 
-def joint_optimal_ask(n_sellers: int = 5, asks=range(80, 101)) -> int:
+@lru_cache(maxsize=None)
+def joint_optimal_ask(n_sellers: int = 5, asks: tuple = tuple(range(80, 101))) -> int:
     """Common ask that maximises each seller's expected profit when all sellers post it (the
     collusive benchmark; sellers are symmetric, so this also maximises their joint profit)."""
     prof = [expected_profit(x, [x] * (n_sellers - 1)) for x in asks]
