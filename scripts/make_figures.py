@@ -34,12 +34,12 @@ plt.rcParams.update({
 })
 
 
-def short(label: str, families: str) -> str:
+def short(label: str, families: str, version: str) -> str:
     mixed = "mistral" in families
     if label.startswith("C2"):
         p = label.split("=")[1]
         return f"C2 mixed\np={p}" if mixed else f"C2 Llama\np={p}"
-    return label
+    return f"{label}\nprompt {version}" if label == "C3" else label
 
 
 def scores_figure() -> None:
@@ -50,14 +50,15 @@ def scores_figure() -> None:
     groups = [(f"{c} null\n(n={len(g)})", g.max_score.to_numpy(), BLUE)
               for c, g in null.groupby("condition")]
     seeded = pd.concat([pd.read_csv(p) for p in SEEDED]).drop_duplicates("run_id")
-    seeded["group"] = [short(lab, rid) for lab, rid in zip(seeded.label, seeded.run_id)]
+    seeded["group"] = [short(lab, rid, v) for lab, rid, v
+                       in zip(seeded.label, seeded.run_id, seeded.prompt_version)]
     order = sorted(seeded.group.unique(), key=lambda g: (g.startswith("C3"), "mixed" in g, g))
     for gname in order:
         g = seeded[seeded.group == gname]
         groups.append((f"{gname}\n(n={len(g)})", g[f"netinf|{STATE}|true_score"].to_numpy(),
                        ORANGE))
 
-    fig, ax = plt.subplots(figsize=(7.2, 3.4))
+    fig, ax = plt.subplots(figsize=(8.0, 3.5))
     rng = np.random.default_rng(0)
     for k, (name, y, col) in enumerate(groups):
         x = k + rng.uniform(-0.18, 0.18, len(y))

@@ -58,6 +58,8 @@ for r, path in zip(sorted(runs, key=lambda r: r.run_id), sorted(paths, key=lambd
     comp_on, comp_off = compliance(path, r)
     row = {"run_id": r.run_id, "condition": r.condition, "label": r.label,
            "p_channel": r.p_channel, "seed": r.seed, "true_pair": f"{r.true_pair[0]}-{r.true_pair[1]}",
+           "prompt_version": json.loads(Path(path, "meta.json").read_text(encoding="utf-8"))
+           .get("prompt_version"),
            "heldout": r.seed not in cal_seeds, "pc_primary_win": p["primary_win_rate"],
            "pc_p": p["p_value"], "pc_passed": p["passed"], "compliance": comp_on,
            "compliance_off_channel": comp_off}

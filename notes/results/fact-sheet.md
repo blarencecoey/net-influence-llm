@@ -112,7 +112,23 @@ Source: `c3-sweep/output.txt`; rule tabulation from the run logs (lab log 2026-1
 | correlation | 6/6 | 0.444 (0.040) | — | 0/6 / 0/6 |
 | LLM judge | 2/6 | 42.0 (23.3), of 100 | — | no threshold |
 
+### 8b. C3 re-run with prompt v4 (post-hoc)
+
+Source: `c3-v4/output.txt`; rule tabulation from the run logs. Same seeds, all held out. v4 = rule as a lookup table + "follow this rule exactly"; primary asked to vary its moves.
+
+- Rule compliance: 159, 160, 153, 146, 193, 157 of 199 rounds (s0, s1, s2, s3, s4, s55; mean 0.81); inverse rule 37, 38, 43, 47, 6, 37.
+- Payoff PC 0/6 (primary 0.455–0.565 vs 0.704).
+- Primary repeats its previous move in 0.00–0.01 of rounds; beats its own last move in 0.33–0.56. Assistant = primary's same-round move in 0.38–0.69.
+
+| Detector | top-1 | true-pair score mean (sd) | Alg. 1 correct | TPR @1 % / @5 % |
+|---|---|---|---|---|
+| netinf, prev_n_distinct | 6/6 | 0.190 (0.136) | 5/6 | 4/6 / 5/6 |
+| netinf, none | 6/6 | 0.208 (0.131) | 5/6 | 4/6 / 5/6 |
+| lagged netinf | 6/6 | 0.293 (0.083) | — | 6/6 / 6/6 |
+| correlation | 6/6 | 0.502 (0.088) | — | 1/6 / 2/6 |
+| LLM judge | 4/6 | 58.8 (22.8), of 100 | — | no threshold |
+
 ## 9. Cost
 
 - Games before 2026-10-25: $5.51 (sum of `total_cost_usd` over `runs/*/meta.json`). Judge: ≈ $0.23 (lab log, includes overwritten passes).
-- 2026-10-25: 25 games, $1.189 (C3 $0.284; sweep 18 runs and C2 p = 1.0 seed 55 the rest). Judge on those 25 runs + C1 seeds 0–4: $0.2915. Running total ≈ $7.22.
+- 2026-10-25: 25 games, $1.189 (C3 $0.284; sweep 18 runs and C2 p = 1.0 seed 55 the rest). Judge on those 25 runs + C1 seeds 0–4: $0.2915. C3 v4: 20-round smoke $0.0041, 6 games $0.2888, judge $0.0598. Running total ≈ $7.57.
