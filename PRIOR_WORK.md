@@ -25,10 +25,13 @@ Everything committed on or after Oct 23, 2026. The git history is the record; th
 - > [claude] 2026-10-24 (with Claude as coding colleague): LLM RPS harness and runner, LLM-judge baseline, analysis pipeline with calibrated thresholds, results viewer; C2 prompts v1–v3; all LLM runs (C2, C0, C1, mixed C2) and judge runs; removal of the circular-shift test (B18); scripted lockstep control; re-analyses in `notes/results/`. Commits `0c3e9c8` to `5e0f050`.
 - > [claude] 2026-10-25: C3 and H3-sweep LLM runs (`configs/c3.yaml`, `configs/c2_sweep_low.yaml`) and their analysis.
 
+- > [claude] 2026-10-25: 75-second explainer film in `film/` (with Claude as writer, designer and render engineer; not report prose). Numbers on screen are taken from `notes/results/fact-sheet.md`, see `film/SOURCES.md`.
+
 ## External code used
 
 | Source | What | License |
 |---|---|---|
-| _none yet_ | | |
+| Inter typeface (Rasmus Andersson), from the Debian `fonts-inter` package | Font files in `film/src/fonts/` for the explainer film | OFL-1.1 (`film/src/fonts/LICENSE-Inter.txt`) |
+| DejaVu Sans Mono, from the Debian `fonts-dejavu` package | Font file in `film/src/fonts/` for the explainer film | Bitstream Vera license (`film/src/fonts/LICENSE-DejaVu.txt`) |
 
 Add a row whenever third-party code is vendored or adapted (e.g. the Agrawal et al. double-auction harness, https://github.com/andyjliu/llm-agent-collusion).

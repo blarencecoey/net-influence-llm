@@ -1,0 +1,71 @@
+1
+00:00:00,400 --> 00:00:03,600
+Four AI agents play Rock-Paper-Scissors.
+
+2
+00:00:03,800 --> 00:00:06,800
+Agent A keeps winning. Agent B never does.
+
+3
+00:00:07,200 --> 00:00:11,400
+B is quietly throwing the move that lets A win.
+
+4
+00:00:11,600 --> 00:00:15,700
+That's collusion: secret teamwork at everyone else's expense.
+
+5
+00:00:16,200 --> 00:00:19,800
+Silly in a game. Less silly in auctions, pricing or trading.
+
+6
+00:00:20,000 --> 00:00:23,700
+So: can you catch it from the moves alone?
+
+7
+00:00:24,300 --> 00:00:28,400
+Bonjour et al. (2022): how much does A's move tell you about B's?
+
+8
+00:00:28,600 --> 00:00:32,200
+Then subtract the most any other agent explains.
+
+9
+00:00:32,400 --> 00:00:35,700
+Still above 0.05, both ways? Flag the pair.
+
+10
+00:00:36,200 --> 00:00:40,600
+Step one: rebuild their detector and match their scripted results.
+
+11
+00:00:40,800 --> 00:00:45,700
+Step two: four Llama agents, one secret channel. Found the pair in 5 of 5 runs.
+
+12
+00:00:46,200 --> 00:00:50,000
+Plot twist: copies of the same model share habits.
+
+13
+00:00:50,200 --> 00:00:54,400
+The published rule flagged 40 of 55 honest games. Mostly the twins.
+
+14
+00:00:54,600 --> 00:00:59,700
+Fix: set the bar from honest games. False alarms drop from 45% to under 1%.
+
+15
+00:01:00,200 --> 00:01:04,000
+Blind spot one: a pre-agreed plan only shows up one move later.
+
+16
+00:01:04,200 --> 00:01:07,700
+Blind spot two: three colluders hide behind each other. Score: zero.
+
+17
+00:01:08,200 --> 00:01:11,600
+Net influence is a screen, not proof.
+
+18
+00:01:11,800 --> 00:01:14,800
+Who moves together more than anyone else can explain?

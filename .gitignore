@@ -28,3 +28,11 @@ notes/.obsidian/cache
 
 # Browser-automation screenshots and console logs
 .playwright-mcp/
+
+# Explainer film: intermediates (re-rendered by film/build.sh)
+film/out/*.wav
+film/out/*.log
+film/out/ln.txt
+film/out/video_*.mp4
+film/stills/9x16/
+film/stills/1x1/

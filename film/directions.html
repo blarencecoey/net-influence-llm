@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Film Directions</title>
+<link rel="stylesheet" href="src/tokens.css">
+<style>
+body{margin:0;padding:24px 16px;background:var(--ground);color:var(--ink);font-family:var(--sans)}
+h1{font-size:28px;margin:0 0 4px} p{color:var(--muted);max-width:70ch}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;margin-top:16px}
+figure{margin:0;border:2px solid var(--line);border-radius:12px;padding:12px;background:#fff8}
+figure.win{border-color:var(--accent)} img{width:100%;border-radius:6px;display:block}
+figcaption{margin-top:8px;font-size:15px;line-height:1.4} b{font-weight:700}
+</style></head><body>
+<h1>Directions at the same beat (S04, t = 34.5 s, "flag the pair")</h1>
+<p>Same layout, same timeline, three token sets (<code>src/tokens.js</code>, <code>?dir=a|b|c</code>). Decision log in DECISIONS.md.</p>
+<div class="grid">
+<figure class="win"><img src="stills/dirs/16x9_a_t34.50.png" alt="Direction A: warm paper ground, ink text, coral accent"><figcaption><b>A · Paper & ink — chosen.</b> Warm and friendly, matches the lighthearted brief; coral accent reads as "suspicious" without alarm-red.</figcaption></figure>
+<figure><img src="stills/dirs/16x9_b_t34.50.png" alt="Direction B: dark chalkboard ground with yellow accent"><figcaption><b>B · Chalkboard.</b> Good contrast but reads as a lecture; yellow accent competes with the captions' dark box.</figcaption></figure>
+<figure><img src="stills/dirs/16x9_c_t34.50.png" alt="Direction C: cool white ground with blue accent"><figcaption><b>C · Blueprint.</b> Clean but corporate; blue accent loses the "something is off" signal.</figcaption></figure>
+</div></body></html>

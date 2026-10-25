@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Net Influence Explainer</title>
+<link rel="stylesheet" href="tokens.css">
+<style>
+  html, body { margin: 0; background: var(--ground); }
+  canvas { display: block; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script src="tokens.js"></script>
+<script src="film.js"></script>
+<script src="audio.js"></script>
+<script>
+  window.READY = Promise.all([
+    document.fonts.load("400 40px Inter"), document.fonts.load("600 40px Inter"),
+    document.fonts.load("700 40px Inter"), document.fonts.load("400 40px DejaVuMono"),
+  ]).then(() => document.fonts.ready).then(() => {
+    const t = parseFloat(new URLSearchParams(location.search).get('t') || '0');
+    window.seek(t);
+    return true;
+  });
+</script>
+</body>
+</html>
