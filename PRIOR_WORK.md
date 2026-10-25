@@ -22,6 +22,8 @@ Everything committed on or after Oct 23, 2026. The git history is the record; th
 > [claude] Tagged 2026-10-24: annotated tag `pre-sprint` → `643b0b2` (2026-10-21, the last commit before the first sprint commit `039e94f` on 2026-10-24), pushed to origin.
 
 - 2026-10-24: detector, scripted RPS, correlation baseline, tests, Table 2 reproduction and scripted 4-agent comparison scripts (with Claude as coding colleague).
+- > [claude] 2026-10-24 (with Claude as coding colleague): LLM RPS harness and runner, LLM-judge baseline, analysis pipeline with calibrated thresholds, results viewer; C2 prompts v1–v3; all LLM runs (C2, C0, C1, mixed C2) and judge runs; removal of the circular-shift test (B18); scripted lockstep control; re-analyses in `notes/results/`. Commits `0c3e9c8` to `5e0f050`.
+- > [claude] 2026-10-25: C3 and H3-sweep LLM runs (`configs/c3.yaml`, `configs/c2_sweep_low.yaml`) and their analysis.
 
 ## External code used
 
