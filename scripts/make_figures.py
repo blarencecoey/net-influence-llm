@@ -1,18 +1,22 @@
 """Report figures from saved analysis outputs (no scoring, no API).
 
 Usage:
-  python scripts/make_figures.py <out_dir> <calib_dir> <seeded per_run.csv> [...]
+  python scripts/make_figures.py <out_dir> <calib_dir> <seeded per_run.csv> [...] [--auction <dir>]
 
 - scores.png: net influence (pre-registered state) per run. Null runs (C0, C1; calibration and
   held-out) show their largest pair score, seeded runs the true pair's score; dashed lines are
   the frozen 1% / 5% thresholds from <calib_dir>/thresholds.json.
 - decomposition.png: mean gross gamma vs the subtracted third-agent term by pair type, parsed from
   notes/results/net-decomposition/output.txt.
+- auction.png (with --auction, e.g. notes/results/auction): left, net influence per auction run
+  (state prev_price_band; nulls A0 / A1 max pair score, A2 seeded pair's score) against that
+  analysis' frozen thresholds; right, mean ask per 10-hour block per condition against the
+  reference asks (price_paths.csv, references.json).
 Colours: the first three categorical slots of the dataviz reference palette (light mode).
 """
+import argparse
 import json
 import re
-import sys
 from pathlib import Path
 
 import matplotlib
@@ -22,7 +26,13 @@ import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
 
-OUT, CALIB, SEEDED = Path(sys.argv[1]), Path(sys.argv[2]), sys.argv[3:]
+ap = argparse.ArgumentParser()
+ap.add_argument("out", type=Path)
+ap.add_argument("calib", type=Path)
+ap.add_argument("seeded", nargs="+")
+ap.add_argument("--auction", type=Path)
+args = ap.parse_args()
+OUT, CALIB, SEEDED, AUCTION = args.out, args.calib, args.seeded, args.auction
 STATE = "prev_n_distinct"
 BLUE, ORANGE, AQUA = "#2a78d6", "#eb6834", "#1baf7a"
 INK, INK2, GRID, SURFACE = "#0b0b0b", "#52514e", "#e4e3df", "#ffffff"
@@ -108,7 +118,64 @@ def decomposition_figure() -> None:
     plt.close(fig)
 
 
+def auction_figure() -> None:
+    st = "prev_price_band"
+    th = json.loads((AUCTION / "thresholds.json").read_text(encoding="utf-8"))["detectors"][f"netinf|{st}"]
+    pu = pd.read_csv(AUCTION / "per_unit.csv")
+    pu = pu[(pu.detector == "netinf") & (pu.state == st)]
+    mixed = pu.unit_id.str.contains("mistral")
+    groups = [("A0 null\n5 Llama", pu[pu.condition == "A0"].max_score, BLUE),
+              ("A1 null\n3 Llama +\n2 Mistral", pu[pu.condition == "A1"].max_score, BLUE),
+              ("A2 seeded\n5 Llama", pu[(pu.condition == "A2") & ~mixed].true_score, ORANGE),
+              ("A2 seeded\n3 Llama +\n2 Mistral", pu[(pu.condition == "A2") & mixed].true_score, ORANGE)]
+    fig, (ax, bx) = plt.subplots(1, 2, figsize=(8.0, 3.3), gridspec_kw={"width_ratios": [1, 1.15]})
+    rng = np.random.default_rng(0)
+    for k, (_, y, col) in enumerate(groups):
+        ax.scatter(k + rng.uniform(-0.18, 0.18, len(y)), y, s=16, color=col, edgecolor=SURFACE,
+                   linewidth=0.6, zorder=3)
+    for f, ls, va in (("0.01", "--", "bottom"), ("0.05", ":", "top")):  # labels in the empty gap
+        ax.axhline(th[f], color=INK2, lw=1, ls=ls, zorder=2)
+        ax.text(2.0, th[f], f"{float(f):.0%}: {th[f]:.3f}", va=va, ha="center", fontsize=7, color=INK2)
+    ax.axhline(0, color=GRID, lw=1, zorder=1)
+    ax.set_xticks(range(len(groups)), [f"{g[0]}\n(n={len(g[1])})" for g in groups], fontsize=7)
+    ax.set_xlim(-0.6, len(groups) - 0.4)
+    ax.set_ylabel(f"net influence (state {st})")
+    ax.yaxis.grid(True, color=GRID, lw=0.6)
+    ax.set_axisbelow(True)
+    ax.set_title("Detection", fontsize=9, loc="left")
+
+    pp = pd.read_csv(AUCTION / "price_paths.csv")
+    ref = json.loads((AUCTION / "references.json").read_text(encoding="utf-8"))
+    style = {"A0": (BLUE, "-"), "A1": (BLUE, "--"), "A2": (ORANGE, None)}
+    for (cond, models), g in pp.groupby(["condition", "models"]):
+        col, ls = style[cond]
+        ls = ls or ("--" if "mistral" in models else "-")
+        who = "3 Llama + 2 Mistral" if "mistral" in models else "5 Llama"
+        bx.plot(g.hour + 4.5, g.mean_ask, color=col, ls=ls, lw=1.8,
+                label=f"{cond} {'seeded' if cond == 'A2' else 'null'}, {who} (n={g.n_runs.iloc[0]})")
+    for key, name in (("midpoint", "midpoint"), ("joint_optimal_ask", "joint optimum"),
+                      ("equilibrium_ask", "equilibrium")):
+        bx.axhline(ref[key], color=INK2, lw=0.9, ls=(0, (4, 3)), zorder=1)
+        bx.text(200, ref[key], f"{name} ${ref[key]}", va="top" if key == "midpoint" else "bottom",
+                ha="right", fontsize=7, color=INK2)  # midpoint label below its line, clear of the asks
+    bx.set_ylim(ref["equilibrium_ask"] - 1.5, 94)
+    bx.set_xlim(0, 200)
+    bx.set_xlabel("hour")
+    bx.set_ylabel("mean ask ($, 10-hour blocks)")
+    bx.yaxis.grid(True, color=GRID, lw=0.6)
+    bx.set_axisbelow(True)
+    bx.legend(frameon=False, fontsize=6.5, loc="center left", bbox_to_anchor=(0.02, 0.36))
+    bx.set_title("Asks over the run", fontsize=9, loc="left")
+    fig.tight_layout()
+    fig.savefig(OUT / "auction.png", dpi=200)
+    plt.close(fig)
+
+
 OUT.mkdir(parents=True, exist_ok=True)
 scores_figure()
 decomposition_figure()
-print(f"wrote {OUT / 'scores.png'}, {OUT / 'decomposition.png'}")
+written = [OUT / "scores.png", OUT / "decomposition.png"]
+if AUCTION:
+    auction_figure()
+    written.append(OUT / "auction.png")
+print("wrote " + ", ".join(map(str, written)))
