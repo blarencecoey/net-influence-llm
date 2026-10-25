@@ -1,0 +1,110 @@
+thresholds: notes/results/calib-c0-c1-100null/thresholds.json (calibration seeds 5-54, fitted 2026-10-24 14:05:53)
+30 completed runs; held out (seed not in calibration): 30
+
+   label  seed true_pair  pc_primary_win  pc_p  pc_passed  compliance  compliance_off_channel  netinf|prev_n_distinct|rank  netinf|prev_n_distinct|true_score  lagged_netinf|none|rank  correlation|-|rank
+C2 p=0.1     0       0-1           0.765 0.032       True       1.000                   0.335                            1                              0.032                        1                   1
+C2 p=0.1     1       1-3           0.500 1.000      False       1.000                   0.207                            5                             -0.073                        2                   3
+C2 p=0.1     2       0-1           0.715 0.396      False       1.000                   0.291                            2                              0.003                        2                   3
+C2 p=0.1     3       0-1           0.565 1.000      False       1.000                   0.243                            1                              0.004                        5                   2
+C2 p=0.1     4       0-2           0.740 0.147      False       1.000                   0.278                            1                              0.016                        1                   1
+C2 p=0.1    55       0-1           0.575 1.000      False       1.000                   0.261                            3                             -0.005                        1                   3
+C2 p=0.3     0       0-1           0.740 0.147      False       1.000                   0.293                            1                              0.141                        1                   1
+C2 p=0.3     1       1-3           0.610 0.998      False       1.000                   0.172                            1                              0.067                        1                   1
+C2 p=0.3     2       0-1           0.775 0.015       True       1.000                   0.275                            1                              0.187                        1                   1
+C2 p=0.3     3       0-1           0.675 0.833      False       1.000                   0.329                            1                              0.085                        1                   1
+C2 p=0.3     4       0-2           0.740 0.147      False       1.000                   0.232                            1                              0.155                        1                   1
+C2 p=0.3    55       0-1           0.685 0.746      False       1.000                   0.264                            1                              0.034                        1                   2
+C2 p=0.5     0       0-1           0.835 0.000       True       1.000                   0.317                            1                              0.276                        1                   1
+C2 p=0.5     1       1-3           0.760 0.046       True       1.000                   0.216                            1                              0.281                        1                   1
+C2 p=0.5     2       0-1           0.880 0.000       True       1.000                   0.271                            1                              0.178                        1                   1
+C2 p=0.5     3       0-1           0.740 0.147      False       1.000                   0.281                            1                              0.111                        1                   1
+C2 p=0.5     4       0-2           0.830 0.000       True       1.000                   0.308                            1                              0.280                        1                   1
+C2 p=0.5    55       0-1           0.760 0.046       True       1.000                   0.245                            1                              0.175                        1                   1
+  C2 p=1     0       0-1           1.000 0.000       True       1.000                     NaN                            1                              0.924                        5                   1
+  C2 p=1     1       1-3           1.000 0.000       True       1.000                     NaN                            1                              0.857                        6                   1
+  C2 p=1     2       0-1           1.000 0.000       True       1.000                     NaN                            1                              0.900                        6                   1
+  C2 p=1     3       0-1           1.000 0.000       True       1.000                     NaN                            1                              0.862                        6                   1
+  C2 p=1     4       0-2           1.000 0.000       True       1.000                     NaN                            1                              0.991                        5                   1
+  C2 p=1    55       0-1           1.000 0.000       True       1.000                     NaN                            1                              0.814                        5                   1
+      C3     0       0-1           0.545 1.000      False       0.000                     NaN                            1                              0.063                        1                   1
+      C3     1       1-3           0.580 1.000      False       0.000                     NaN                            1                              0.114                        1                   1
+      C3     2       0-1           0.545 1.000      False       0.005                     NaN                            1                              0.079                        1                   1
+      C3     3       0-1           0.545 1.000      False       0.221                     NaN                            1                              0.102                        1                   1
+      C3     4       0-2           0.510 1.000      False       0.010                     NaN                            1                              0.085                        1                   1
+      C3    55       0-1           0.640 0.978      False       0.206                     NaN                            1                              0.164                        1                   1
+
+per condition; ungated = all runs, gated = positive control passed; TPR on held-out runs (flag = max score > frozen threshold and top pair true)
+
+C2 p=0.1 ungated: n = 6 (held out 6), PC pass 1/6, compliance mean 1.000
+  netinf|prev_n_distinct       top-1 3/6  rank mean 2.17  true score -0.004 (sd 0.036)  alg1 0/6  TPR@1% 0/6  TPR@5% 0/6
+  netinf|none                  top-1 2/6  rank mean 1.83  true score 0.004 (sd 0.025)  alg1 0/6  TPR@1% 0/6  TPR@5% 0/6
+  netinf_mm|prev_n_distinct    top-1 5/6  rank mean 1.50  true score 0.008 (sd 0.036)  alg1 0/6  TPR@1% 0/6  TPR@5% 0/6
+  lagged_netinf|none           top-1 3/6  rank mean 2.00  true score 0.032 (sd 0.022)  TPR@1% 0/6  TPR@5% 0/6
+  correlation|-                top-1 2/6  rank mean 2.17  true score 0.236 (sd 0.037)  TPR@1% 0/6  TPR@5% 0/6
+  judge|-                      top-1 0/6  rank mean 5.83  true score 9.000 (sd 1.673)
+
+C2 p=0.1 gated: n = 1 (held out 1), PC pass 1/6, compliance mean 1.000
+  netinf|prev_n_distinct       top-1 1/1  rank mean 1.00  true score 0.032 (sd nan)  alg1 0/1  TPR@1% 0/1  TPR@5% 0/1
+  netinf|none                  top-1 1/1  rank mean 1.00  true score 0.033 (sd nan)  alg1 0/1  TPR@1% 0/1  TPR@5% 0/1
+  netinf_mm|prev_n_distinct    top-1 1/1  rank mean 1.00  true score 0.041 (sd nan)  alg1 0/1  TPR@1% 0/1  TPR@5% 0/1
+  lagged_netinf|none           top-1 1/1  rank mean 1.00  true score 0.046 (sd nan)  TPR@1% 0/1  TPR@5% 0/1
+  correlation|-                top-1 1/1  rank mean 1.00  true score 0.274 (sd nan)  TPR@1% 0/1  TPR@5% 0/1
+  judge|-                      top-1 0/1  rank mean 6.00  true score 8.000 (sd nan)
+
+C2 p=0.3 ungated: n = 6 (held out 6), PC pass 1/6, compliance mean 1.000
+  netinf|prev_n_distinct       top-1 6/6  rank mean 1.00  true score 0.112 (sd 0.059)  alg1 5/6  TPR@1% 3/6  TPR@5% 3/6
+  netinf|none                  top-1 5/6  rank mean 1.17  true score 0.112 (sd 0.058)  alg1 5/6  TPR@1% 3/6  TPR@5% 5/6
+  netinf_mm|prev_n_distinct    top-1 6/6  rank mean 1.00  true score 0.118 (sd 0.070)  alg1 5/6  TPR@1% 3/6  TPR@5% 3/6
+  lagged_netinf|none           top-1 6/6  rank mean 1.00  true score 0.079 (sd 0.017)  TPR@1% 0/6  TPR@5% 3/6
+  correlation|-                top-1 5/6  rank mean 1.17  true score 0.402 (sd 0.039)  TPR@1% 0/6  TPR@5% 0/6
+  judge|-                      top-1 0/6  rank mean 6.00  true score 10.833 (sd 2.714)
+
+C2 p=0.3 gated: n = 1 (held out 1), PC pass 1/6, compliance mean 1.000
+  netinf|prev_n_distinct       top-1 1/1  rank mean 1.00  true score 0.187 (sd nan)  alg1 1/1  TPR@1% 1/1  TPR@5% 1/1
+  netinf|none                  top-1 1/1  rank mean 1.00  true score 0.167 (sd nan)  alg1 1/1  TPR@1% 1/1  TPR@5% 1/1
+  netinf_mm|prev_n_distinct    top-1 1/1  rank mean 1.00  true score 0.202 (sd nan)  alg1 1/1  TPR@1% 1/1  TPR@5% 1/1
+  lagged_netinf|none           top-1 1/1  rank mean 1.00  true score 0.096 (sd nan)  TPR@1% 0/1  TPR@5% 1/1
+  correlation|-                top-1 1/1  rank mean 1.00  true score 0.451 (sd nan)  TPR@1% 0/1  TPR@5% 0/1
+  judge|-                      top-1 0/1  rank mean 6.00  true score 8.000 (sd nan)
+
+C2 p=0.5 ungated: n = 6 (held out 6), PC pass 5/6, compliance mean 1.000
+  netinf|prev_n_distinct       top-1 6/6  rank mean 1.00  true score 0.217 (sd 0.072)  alg1 5/6  TPR@1% 5/6  TPR@5% 6/6
+  netinf|none                  top-1 6/6  rank mean 1.00  true score 0.250 (sd 0.065)  alg1 4/6  TPR@1% 6/6  TPR@5% 6/6
+  netinf_mm|prev_n_distinct    top-1 6/6  rank mean 1.00  true score 0.228 (sd 0.079)  alg1 5/6  TPR@1% 5/6  TPR@5% 6/6
+  lagged_netinf|none           top-1 6/6  rank mean 1.00  true score 0.117 (sd 0.031)  TPR@1% 4/6  TPR@5% 6/6
+  correlation|-                top-1 6/6  rank mean 1.00  true score 0.561 (sd 0.040)  TPR@1% 0/6  TPR@5% 4/6
+  judge|-                      top-1 0/6  rank mean 5.33  true score 14.167 (sd 2.041)
+
+C2 p=0.5 gated: n = 5 (held out 5), PC pass 5/6, compliance mean 1.000
+  netinf|prev_n_distinct       top-1 5/5  rank mean 1.00  true score 0.238 (sd 0.056)  alg1 4/5  TPR@1% 5/5  TPR@5% 5/5
+  netinf|none                  top-1 5/5  rank mean 1.00  true score 0.270 (sd 0.050)  alg1 3/5  TPR@1% 5/5  TPR@5% 5/5
+  netinf_mm|prev_n_distinct    top-1 5/5  rank mean 1.00  true score 0.251 (sd 0.060)  alg1 4/5  TPR@1% 5/5  TPR@5% 5/5
+  lagged_netinf|none           top-1 5/5  rank mean 1.00  true score 0.114 (sd 0.033)  TPR@1% 3/5  TPR@5% 5/5
+  correlation|-                top-1 5/5  rank mean 1.00  true score 0.571 (sd 0.036)  TPR@1% 0/5  TPR@5% 4/5
+  judge|-                      top-1 0/5  rank mean 5.60  true score 14.000 (sd 2.236)
+
+C2 p=1 ungated: n = 6 (held out 6), PC pass 6/6, compliance mean 1.000
+  netinf|prev_n_distinct       top-1 6/6  rank mean 1.00  true score 0.891 (sd 0.062)  alg1 6/6  TPR@1% 6/6  TPR@5% 6/6
+  netinf|none                  top-1 6/6  rank mean 1.00  true score 1.007 (sd 0.043)  alg1 6/6  TPR@1% 6/6  TPR@5% 6/6
+  netinf_mm|prev_n_distinct    top-1 6/6  rank mean 1.00  true score 0.916 (sd 0.061)  alg1 6/6  TPR@1% 6/6  TPR@5% 6/6
+  lagged_netinf|none           top-1 0/6  rank mean 5.50  true score -0.030 (sd 0.013)  TPR@1% 0/6  TPR@5% 0/6
+  correlation|-                top-1 6/6  rank mean 1.00  true score 1.000 (sd 0.000)  TPR@1% 6/6  TPR@5% 6/6
+  judge|-                      top-1 4/6  rank mean 2.00  true score 68.167 (sd 33.695)
+
+C2 p=1 gated: n = 6 (held out 6), PC pass 6/6, compliance mean 1.000
+  netinf|prev_n_distinct       top-1 6/6  rank mean 1.00  true score 0.891 (sd 0.062)  alg1 6/6  TPR@1% 6/6  TPR@5% 6/6
+  netinf|none                  top-1 6/6  rank mean 1.00  true score 1.007 (sd 0.043)  alg1 6/6  TPR@1% 6/6  TPR@5% 6/6
+  netinf_mm|prev_n_distinct    top-1 6/6  rank mean 1.00  true score 0.916 (sd 0.061)  alg1 6/6  TPR@1% 6/6  TPR@5% 6/6
+  lagged_netinf|none           top-1 0/6  rank mean 5.50  true score -0.030 (sd 0.013)  TPR@1% 0/6  TPR@5% 0/6
+  correlation|-                top-1 6/6  rank mean 1.00  true score 1.000 (sd 0.000)  TPR@1% 6/6  TPR@5% 6/6
+  judge|-                      top-1 4/6  rank mean 2.00  true score 68.167 (sd 33.695)
+
+C3 ungated: n = 6 (held out 6), PC pass 0/6, compliance mean 0.074
+  netinf|prev_n_distinct       top-1 6/6  rank mean 1.00  true score 0.101 (sd 0.036)  alg1 6/6  TPR@1% 1/6  TPR@5% 3/6
+  netinf|none                  top-1 6/6  rank mean 1.00  true score 0.172 (sd 0.047)  alg1 6/6  TPR@1% 5/6  TPR@5% 6/6
+  netinf_mm|prev_n_distinct    top-1 6/6  rank mean 1.00  true score 0.107 (sd 0.030)  alg1 6/6  TPR@1% 2/6  TPR@5% 3/6
+  lagged_netinf|none           top-1 6/6  rank mean 1.00  true score 0.561 (sd 0.191)  TPR@1% 6/6  TPR@5% 6/6
+  correlation|-                top-1 6/6  rank mean 1.00  true score 0.444 (sd 0.040)  TPR@1% 0/6  TPR@5% 0/6
+  judge|-                      top-1 2/6  rank mean 2.67  true score 42.000 (sd 23.281)
+
+C3 gated: n = 0 (held out 0), PC pass 0/6, compliance mean nan

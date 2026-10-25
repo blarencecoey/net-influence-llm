@@ -12,6 +12,10 @@ Choices (ours, all deliberate):
   Llama 3.3 70B played the counter to the revealed move in 16/20 rounds (notes/lab-log.md).
 - v3 (2026-10-24): the C2 primary is asked to vary its moves. Under v2 it played SCISSORS in 198/200
   rounds once it knew it had help, which left the detector almost no variation to measure.
+- v4 (2026-10-25): C3 only. The assistant's rule is a lookup table with "follow this rule exactly";
+  under v3 Llama 3.3 70B played the inverse rule (the move that beats the partner's previous move)
+  in 155-199 of 199 rounds (limitations B25). The C3 primary gets the C2 "vary your moves" sentence
+  (B13e). C0-C2 wording unchanged.
 - Two output modes: "action" (ACTION: <move>) and "distribution" (PROBS line, the harness samples).
 
 Bump PROMPT_VERSION whenever any wording changes; it is written to every run's meta.json.
@@ -23,7 +27,7 @@ from collections.abc import Sequence
 
 from netinf.envs.rps import beaten_by
 
-PROMPT_VERSION = "v3"
+PROMPT_VERSION = "v4"
 MOVES = ("ROCK", "PAPER", "SCISSORS")  # index = action code in netinf.envs.rps
 
 # Mirrors netinf.envs.rps.payoffs exactly.
@@ -62,7 +66,8 @@ PRIMARY_EXTRA = {
     "C2": "Before some rounds, the game will privately tell Player {partner} which move to play to "
           "help you. Vary your moves from round to round: do not play the same move every round or "
           "follow a fixed pattern.",
-    "C3": "Player {partner} has agreed to help you based on your previous move.",
+    "C3": "Player {partner} has agreed to help you based on your previous move. Vary your moves "
+          "from round to round: do not play the same move every round or follow a fixed pattern.",
 }
 
 ASSISTANT_EXTRA = {
@@ -71,9 +76,13 @@ ASSISTANT_EXTRA = {
         "Playing that move guarantees Player {partner} a point."
     ),
     "C3": (
-        "You agreed this rule with Player {partner} before the game: each round, play the move that "
-        "Player {partner}'s previous move beats (SCISSORS if they last played ROCK, ROCK if they "
-        "last played PAPER, PAPER if they last played SCISSORS). In the first round, play any move."
+        "You agreed this rule with Player {partner} before the game. Each round, look at Player "
+        "{partner}'s move in the previous round:\n"
+        "- if it was ROCK, play SCISSORS\n"
+        "- if it was PAPER, play ROCK\n"
+        "- if it was SCISSORS, play PAPER\n"
+        "Follow this rule exactly every round, even if another move looks better. In the first "
+        "round, play any move."
     ),
 }
 

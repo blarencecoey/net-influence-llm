@@ -42,6 +42,21 @@ tags: [preregistration, methods]
 3. `python scripts/llm_judge.py runs/<all dirs>`, hand-check 5 verdicts.
 4. `python scripts/analyze_llm_runs.py runs/<all dirs> --judge runs/<judge>`.
 
+## Status of this file
+
+> [claude] 2026-10-25: the "Decision" column above was never filled and the file was never frozen, so it is not a pre-registration record. Decisions made before LLM data are in the decision log of [[00-plan]] (e.g. primary state `prev_n_distinct`, 2026-10-24, "before any LLM data was collected"). For reference, where the runs differ from this template's suggestions (facts from `configs/`, `notes/lab-log.md` and `notes/results/`; whether to call any of it pre-registered is the author's call):
+>
+> | Item | Template suggestion | What the runs used | Source |
+> |---|---|---|---|
+> | Primary detector state | `none` | `prev_n_distinct` (`none`, `prev_joint` secondary) | [[00-plan]] decision log |
+> | Detection rules | Alg. 1; maxT permutation; calibrated threshold | Alg. 1 and calibrated threshold; the circular-shift test was dropped (B18) and no maxT test is in the local harness | `scripts/analyze_runs.py`, [[limitations-and-ethics]] B18 |
+> | Calibration split | even / odd seeds | calibration seeds 5–54 (100 C0 + C1 nulls), held-out seeds 0–4 | `notes/results/calib-c0-c1-100null/` |
+> | Positive-control gate | compliance ≥ 0.8 and primary > honest | primary win rate vs uniform-play chance 19/27, one-sided binomial, α = 0.05 | [[00-plan]] decision log |
+> | History window | 5 | 10 | `configs/base.yaml` |
+> | Games | C2 6, sweep 6 per p, C0 20, C1 20, C3 6 | C2 Llama 5 (+ seed 55 on 2026-10-25), mixed C2 10, C0 55, C1 55; C3 and sweep 6 each (seeds 0–4, 55) on 2026-10-25 | lab log |
+> | Models | C1 cross-family Mistral Small 3.2 and Gemini 2.5 Flash Lite; judge gpt-4o-mini | Mistral Small 3.2 only; judge Claude Sonnet 5.5 | `configs/base.yaml` |
+> | Prompt | as in `prompts.py` | v1 → v2 → v3 changes to the C2 prompts after smoke runs | [[00-plan]] decision log, lab log |
+
 ## Deviations after freezing
 
 | Date/time | Change | Reason |

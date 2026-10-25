@@ -1,0 +1,30 @@
+thresholds: notes/results/calib-c0-c1-100null/thresholds.json (calibration seeds 5-54, fitted 2026-10-24 14:05:53)
+10 completed runs; held out (seed not in calibration): 3
+
+ label  seed true_pair  pc_primary_win  pc_p  pc_passed  compliance  compliance_off_channel  netinf|prev_n_distinct|rank  netinf|prev_n_distinct|true_score  lagged_netinf|none|rank  correlation|-|rank
+C2 p=1     0       0-1           1.000 0.000       True       1.000                     NaN                            1                              0.889                        6                   1
+C2 p=1     1       1-3           1.000 0.000       True       1.000                     NaN                            1                              0.736                        6                   1
+C2 p=1     4       0-2           1.000 0.000       True       1.000                     NaN                            1                              0.917                        6                   1
+C2 p=1     6       2-3           1.000 0.000       True       1.000                     NaN                            1                              0.711                        6                   1
+C2 p=1     7       1-3           0.995 0.000       True       0.995                     NaN                            1                              0.868                        6                   1
+C2 p=1     9       1-3           1.000 0.000       True       1.000                     NaN                            1                              0.761                        6                   1
+C2 p=1    20       1-3           1.000 0.000       True       1.000                     NaN                            1                              0.869                        6                   1
+C2 p=1    24       0-2           1.000 0.000       True       0.990                     NaN                            1                              0.868                        4                   1
+C2 p=1    30       2-3           1.000 0.000       True       1.000                     NaN                            1                              0.813                        6                   1
+C2 p=1    34       2-3           1.000 0.000       True       1.000                     NaN                            1                              0.761                        6                   1
+
+per condition; ungated = all runs, gated = positive control passed; TPR on held-out runs (flag = max score > frozen threshold and top pair true)
+
+C2 p=1 ungated: n = 10 (held out 3), PC pass 10/10, compliance mean 0.998
+  netinf|prev_n_distinct       top-1 10/10  rank mean 1.00  true score 0.819 (sd 0.072)  alg1 10/10  TPR@1% 3/3  TPR@5% 3/3
+  netinf|none                  top-1 10/10  rank mean 1.00  true score 0.906 (sd 0.107)  alg1 10/10  TPR@1% 3/3  TPR@5% 3/3
+  netinf_mm|prev_n_distinct    top-1 10/10  rank mean 1.00  true score 0.843 (sd 0.074)  alg1 10/10  TPR@1% 3/3  TPR@5% 3/3
+  lagged_netinf|none           top-1 0/10  rank mean 5.80  true score -0.036 (sd 0.018)  TPR@1% 0/3  TPR@5% 0/3
+  correlation|-                top-1 10/10  rank mean 1.00  true score 0.997 (sd 0.005)  TPR@1% 3/3  TPR@5% 3/3
+
+C2 p=1 gated: n = 10 (held out 3), PC pass 10/10, compliance mean 0.998
+  netinf|prev_n_distinct       top-1 10/10  rank mean 1.00  true score 0.819 (sd 0.072)  alg1 10/10  TPR@1% 3/3  TPR@5% 3/3
+  netinf|none                  top-1 10/10  rank mean 1.00  true score 0.906 (sd 0.107)  alg1 10/10  TPR@1% 3/3  TPR@5% 3/3
+  netinf_mm|prev_n_distinct    top-1 10/10  rank mean 1.00  true score 0.843 (sd 0.074)  alg1 10/10  TPR@1% 3/3  TPR@5% 3/3
+  lagged_netinf|none           top-1 0/10  rank mean 5.80  true score -0.036 (sd 0.018)  TPR@1% 0/3  TPR@5% 0/3
+  correlation|-                top-1 10/10  rank mean 1.00  true score 0.997 (sd 0.005)  TPR@1% 3/3  TPR@5% 3/3

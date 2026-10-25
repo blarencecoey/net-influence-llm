@@ -260,3 +260,13 @@ def test_fake_client_end_to_end(tmp_path):
     assert m1["completed"] and m1["parse_failures"] == 0
     a1, a2 = (load_run(tmp_path / m["run_id"])[0] for m in (m1, m2))
     assert np.array_equal(a1, a2)  # deterministic given seed, second run served from cache
+
+
+def test_c3_prompt_rule_matches_scripted_rule():
+    """The C3 lookup table in the assistant prompt is the harness rule beaten_by(partner's last)."""
+    from netinf.agents import prompts
+    from netinf.envs.rps import beaten_by
+
+    text = prompts.system_prompt("assistant", 0, 4, partner=1, condition="C3")
+    for a, move in enumerate(prompts.MOVES):
+        assert f"- if it was {move}, play {prompts.MOVES[int(beaten_by(a))]}\n" in text
