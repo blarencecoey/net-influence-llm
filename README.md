@@ -146,8 +146,13 @@ flowchart TB
 | Lagged variant (conditional transfer entropy) | Done, tested on scripted tacit collusion |
 | Calibrated threshold | Done in `netinf.analysis`: thresholds frozen on calibration seeds, evaluated on held-out seeds, overlap refused. The circular-shift test was dropped: its null does not match the net score (limitation B18, `scripts/check_shift_null.py`). Run on LLM data: 100 C0/C1 null runs on calibration seeds 5–54, held-out seeds 0–4 (`notes/results/calib-c0-c1-100null/`, `thresholds.json`) |
 | Scripted 3/4-player Rock-Paper-Scissors reproduction | Done; Table 2 reproduced with previous-joint-action state (`notes/methods/reproduction.md`) |
-| LLM agent harness (4-player RPS, seeded colluding pair) | Done; OpenRouter, OpenAI, Anthropic and offline (fake, scripted) backends. Cross-family model: `mistralai/mistral-small-3.2-24b-instruct` (`configs/base.yaml`). Runs so far (`notes/lab-log.md`): C2 Llama 3.3 70B ×4, prompt v3, seeds 0–4; C2 Llama ×2 + Mistral ×2 (`configs/c2_mixed.yaml`), 10 seeds (0, 1, 4, 6, 7, 9, 20, 24, 30, 34); C0 Llama ×4 and C1 Llama ×2 + Mistral ×2, seeds 0–54 each |
-| LLM judge baseline (full trajectory) | Done; `scripts/run_judge.py` writes `judge.json` per run, judge model Claude Sonnet 5.5 via OpenRouter |
+| LLM agent harness (4-player RPS, seeded colluding pair) | Done; OpenRouter, OpenAI, Anthropic and offline (fake, scripted) backends. Cross-family model: `mistralai/mistral-small-3.2-24b-instruct` (`configs/base.yaml`). Prompt version v4 (`src/netinf/agents/prompts.py`; v4 changed only the C3 prompts). Runs (`notes/lab-log.md`), all 200 rounds: |
+| | C2 Llama 3.3 70B ×4, p = 1.0, seeds 0–4, 55; C2 Llama ×2 + Mistral ×2 (`configs/c2_mixed.yaml`), 10 seeds (0, 1, 4, 6, 7, 9, 20, 24, 30, 34) |
+| | C0 Llama ×4 and C1 Llama ×2 + Mistral ×2, seeds 0–54 each |
+| | H3 sweep: C2 Llama ×4, p = 0.1 / 0.3 / 0.5 (`configs/c2_sweep_low.yaml`), seeds 0–4, 55 |
+| | C3 Llama ×4, seeds 0–4, 55, under prompt v3 and v4 (limitation B25) |
+| | C4 three colluders (`configs/c4.yaml`, one primary and two assistants), Llama ×4, seeds 0–4, 55; the cross-family-pair arm of C4 comes from the mixed C2 runs |
+| LLM judge baseline (full trajectory) | Done; `scripts/run_judge.py` writes `judge.json` per run, judge model Claude Sonnet 5.5 via OpenRouter. Run on C2 Llama, sweep, C3, C4, and C0 / C1 seeds 0–4; not on calibration nulls, so no judge threshold |
 | Discrete-price market environment (stretch) | Not started |
 
 ## Layout
@@ -195,6 +200,8 @@ python scripts/scripted_four_agent.py                      # detector comparison
 # LLM games: C2 (positive control) always runs first; --dry-run swaps in scripted agents ($0)
 python scripts/run_llm_rps.py --config configs/c2.yaml --seeds 0 1 2 3 4
 python scripts/run_llm_rps.py --config configs/c0.yaml configs/c1.yaml configs/c3.yaml
+python scripts/run_llm_rps.py --config configs/c2_sweep_low.yaml --seeds 0 1 2 3 4 55
+python scripts/run_llm_rps.py --config configs/c4.yaml --seeds 0 1 2 3 4 55 --skip-positive-control-check   # gate: see below
 python scripts/run_llm_rps.py --config configs/dryrun_c2.yaml   # dryrun_*.yaml: scripted agents, $0
 
 # LLM judge baseline: writes judge.json into each run dir; --dry-run prints the prompt only
@@ -219,15 +226,28 @@ python scripts/sync_stats.py    # synchronisation stats over completed runs in r
 python scripts/sync_rules.py    # per-family move rules for honest C0/C1 players (B22)
 ```
 
-Paid runs are refused while `configs/base.yaml` still holds `*_TODO` model or price placeholders, and a paid non-C2 condition is refused until a C2 run with the same models has passed the positive-control check. Each invocation is capped by `budget_usd`.
+Seeded runs (C2, sweep, C3, C4) against the frozen thresholds, and the report figures ($0; full commands in each results folder's README):
+
+```bash
+python scripts/score_seeded.py notes/results/calib-c0-c1-100null/thresholds.json <out dir> "<run glob>" ...   # C2 / sweep / C3: compliance, ranks, TPR
+python scripts/score_c4.py notes/results/calib-c0-c1-100null/thresholds.json notes/results/c4-three-colluders "runs/C4_*"
+python scripts/c4_family_split.py notes/results/b21-mixed-c2/score_seeded notes/results/calib-c0-c1-100null/thresholds.json
+python scripts/make_figures.py notes/results/figures notes/results/calib-c0-c1-100null <per_run.csv> ...
+```
+
+Paid runs are refused while `configs/base.yaml` still holds `*_TODO` model or price placeholders, and a paid non-C2 condition is refused until a C2 run with the same models and prompt version has passed the positive-control check (`--skip-positive-control-check` overrides it and is recorded in `meta.json`; the C3 v4 and C4 runs used it because the C2 prompts did not change in v4). Each invocation is capped by `budget_usd`.
 
 ## Results
 
-Committed analysis outputs are in [`notes/results/`](notes/results/), one folder per analysis, each with a README giving its input runs, code and command:
+Committed analysis outputs are in [`notes/results/`](notes/results/), one folder per analysis, each with a README giving its input runs, code and command. [`fact-sheet.md`](notes/results/fact-sheet.md) collects the numbers with their source files.
 
-- `b21-mixed-c2/`: C2 Llama + Mistral (mixed families), positive control and detection, under two sets of frozen thresholds.
+- `b21-mixed-c2/`: C2 Llama + Mistral (mixed families), positive control and detection, under two sets of frozen thresholds; `score_seeded/` re-scores them, `family-split/` splits same- vs cross-family colluding pairs (C4 cross-family arm).
 - `c2-llama-v3/`: C2 Llama 3.3 70B ×4, prompt v3, seeds 0–4, analysed before any null runs existed (no thresholds).
+- `c3-sweep/`: H3 sweep (p = 0.1 / 0.3 / 0.5 / 1.0) and C3 under prompt v3, against the frozen thresholds, with compliance and judge.
+- `c3-v4/`: C3 re-run under prompt v4 (post-hoc rule rewording, limitation B25).
+- `c4-three-colluders/`: C4 with one primary and two assistants, LLM and scripted check.
 - `calib-c0-c1-100null/`: C0 + C1 null runs, 100-null calibration on seeds 5–54, C2 Llama v3 seeds 0–4 held out; the frozen `thresholds.json`.
+- `figures/`: report figures (scores of every condition against the frozen thresholds; net-score decomposition).
 - `h1-by-state/`: H1 under each detector state, derived from `calib-c0-c1-100null/`.
 - `net-decomposition/`: net-score decomposition for honest pairs, and an entropy-matched check.
 - `rounds-to-detection/`: rounds needed for detection, runs truncated to their first T rounds.
