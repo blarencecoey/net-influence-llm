@@ -1,0 +1,4 @@
+# C4: three colluders, the C2 mechanism with two assistants (tests the two-colluder assumption, A1).
+base: c2.yaml
+condition: C4
+n_assistants: 2

@@ -43,6 +43,8 @@ def run_dirs(patterns: list[str]) -> list[Path]:
 def true_pair(meta: dict) -> tuple[int, int] | None:
     if meta.get("primary") is None or meta.get("assistant") is None:
         return None
+    if isinstance(meta["assistant"], list):  # C4 with several assistants: no single true pair
+        return None
     return tuple(sorted((meta["primary"], meta["assistant"])))
 
 

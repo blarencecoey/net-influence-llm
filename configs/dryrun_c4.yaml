@@ -1,0 +1,3 @@
+# C4 dry run: scripted agents, $0.
+base: c4.yaml
+provider: scripted
