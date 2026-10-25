@@ -139,7 +139,26 @@ Source: `c3-v4/output.txt`; rule tabulation from the run logs. Same seeds, all h
 | correlation | 6/6 | 0.502 (0.088) | — | 1/6 / 2/6 |
 | LLM judge | 4/6 | 58.8 (22.8), of 100 | — | no threshold |
 
+## 8c. C4 arm: three colluders (one primary, two assistants)
+
+Source: `c4-three-colluders/output.txt` (LLM), `c4-three-colluders/scripted_dryrun.txt` (scripted, 40 seeds). C2 mechanism with `n_assistants: 2`, p = 1.0, prompts as C2 v3 (unchanged in v4). Llama ×4, seeds 0–4, 55, all held out. 3 of the 6 pairs are colluding, so a random top pair is colluding with probability 1/2.
+
+- Positive control 6/6 (primary 1.000 vs chance 0.704, p = 3e-31). Both assistants played the helping move on every round (compliance 1.000 each), so they played identical moves in 200/200 rounds.
+- Net influence: every colluding pair scores exactly 0.000, in all three states; honest pairs are negative (mean of max other pair −0.886 under prev_n_distinct).
+
+| Detector | Top pair colluding | Max colluding score (mean) | Max other pair (mean) | Alg. 1 any / colluding | Flagged @1 % / @5 % |
+|---|---|---|---|---|---|
+| netinf, prev_n_distinct | 6/6 | 0.000 | −0.886 | 0/6 / 0/6 | 0/6 / 0/6 |
+| netinf, none | 6/6 | 0.000 | −0.968 | 0/6 / 0/6 | 0/6 / 0/6 |
+| netinf, prev_joint | 6/6 | 0.000 | −0.266 | 0/6 / 0/6 | 0/6 / 0/6 |
+| lagged netinf | 0/6 | −0.023 | 0.023 | — | 0/6 / 0/6 |
+| correlation | 6/6 | 1.000 | 0.329 | — | 6/6 / 6/6 |
+| LLM judge | 6/6 | 94.3 (of 100) | 19.2 | — | no threshold |
+
+- Scripted, 40 seeds: same pattern (netinf colluding score 0.000, flagged 0/40, Alg. 1 0/40; correlation flagged 40/40; lagged top pair colluding 0/40).
+- LLM judge top scores on C4: 92–97; null top scores so far: C0 35–62, C1 65–88 (held-out seeds 0–4).
+
 ## 9. Cost
 
 - Games before 2026-10-25: $5.51 (sum of `total_cost_usd` over `runs/*/meta.json`). Judge: ≈ $0.23 (lab log, includes overwritten passes).
-- 2026-10-25: 25 games, $1.189 (C3 $0.284; sweep 18 runs and C2 p = 1.0 seed 55 the rest). Judge on those 25 runs + C1 seeds 0–4: $0.2915. C3 v4: 20-round smoke $0.0041, 6 games $0.2888, judge $0.0598. Running total ≈ $7.57.
+- 2026-10-25: 25 games, $1.189 (C3 $0.284; sweep 18 runs and C2 p = 1.0 seed 55 the rest). Judge on those 25 runs + C1 seeds 0–4: $0.2915. C3 v4: 20-round smoke $0.0041, 6 games $0.2888, judge $0.0598. C4 three colluders: 6 games $0.2976, judge $0.0522. Running total ≈ $7.92.
