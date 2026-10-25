@@ -1,5 +1,5 @@
 thresholds: notes/results/calib-c0-c1-100null/thresholds.json (calibration seeds 5-54, fitted 2026-10-24 14:05:53)
-6 completed runs; held out (seed not in calibration): 6
+20 completed runs; held out (seed not in calibration): 20
 
 label  seed true_pair  pc_primary_win  pc_p  pc_passed  compliance  compliance_off_channel  netinf|prev_n_distinct|rank  netinf|prev_n_distinct|true_score  lagged_netinf|none|rank  correlation|-|rank
    C3     0       0-1           0.535 1.000      False       0.799                     NaN                            1                              0.193                        1                   1
@@ -8,15 +8,29 @@ label  seed true_pair  pc_primary_win  pc_p  pc_passed  compliance  compliance_o
    C3     3       0-1           0.500 1.000      False       0.734                     NaN                            1                              0.112                        1                   1
    C3     4       0-2           0.455 1.000      False       0.970                     NaN                            1                              0.434                        1                   1
    C3    55       0-1           0.525 1.000      False       0.789                     NaN                            1                              0.194                        1                   1
+   C3    56       1-3           0.515 1.000      False       0.844                     NaN                            1                              0.053                        1                   1
+   C3    57       1-2           0.575 1.000      False       0.734                     NaN                            2                             -0.027                        1                   1
+   C3    58       0-2           0.530 1.000      False       0.940                     NaN                            1                              0.218                        1                   1
+   C3    59       1-2           0.565 1.000      False       0.709                     NaN                            2                             -0.006                        1                   1
+   C3    60       0-1           0.540 1.000      False       0.779                     NaN                            1                              0.185                        1                   1
+   C3    61       1-2           0.555 1.000      False       0.794                     NaN                            1                              0.191                        1                   1
+   C3    62       1-2           0.525 1.000      False       0.794                     NaN                            1                              0.127                        1                   1
+   C3    63       0-3           0.370 1.000      False       0.839                     NaN                            1                              0.205                        1                   1
+   C3    64       0-1           0.550 1.000      False       0.774                     NaN                            1                              0.129                        1                   1
+   C3    65       0-1           0.415 1.000      False       0.704                     NaN                            1                              0.065                        1                   1
+   C3    66       0-3           0.375 1.000      False       0.824                     NaN                            1                              0.048                        1                   1
+   C3    67       0-2           0.420 1.000      False       0.814                     NaN                            1                              0.156                        1                   1
+   C3    68       0-2           0.460 1.000      False       0.935                     NaN                            1                              0.322                        1                   1
+   C3    69       2-3           0.545 1.000      False       0.749                     NaN                            1                              0.060                        1                   1
 
 per condition; ungated = all runs, gated = positive control passed; TPR on held-out runs (flag = max score > frozen threshold and top pair true)
 
-C3 ungated: n = 6 (held out 6), PC pass 0/6, compliance mean 0.811
-  netinf|prev_n_distinct       top-1 6/6  rank mean 1.00  true score 0.190 (sd 0.136)  alg1 5/6  TPR@1% 4/6  TPR@5% 5/6
-  netinf|none                  top-1 6/6  rank mean 1.00  true score 0.208 (sd 0.131)  alg1 5/6  TPR@1% 4/6  TPR@5% 5/6
-  netinf_mm|prev_n_distinct    top-1 6/6  rank mean 1.00  true score 0.193 (sd 0.138)  alg1 5/6  TPR@1% 4/6  TPR@5% 5/6
-  lagged_netinf|none           top-1 6/6  rank mean 1.00  true score 0.293 (sd 0.083)  TPR@1% 6/6  TPR@5% 6/6
-  correlation|-                top-1 6/6  rank mean 1.00  true score 0.502 (sd 0.088)  TPR@1% 1/6  TPR@5% 2/6
-  judge|-                      top-1 4/6  rank mean 1.67  true score 58.833 (sd 22.754)
+C3 ungated: n = 20 (held out 20), PC pass 0/20, compliance mean 0.805
+  netinf|prev_n_distinct       top-1 18/20  rank mean 1.10  true score 0.143 (sd 0.111)  alg1 15/20  TPR@1% 12/20  TPR@5% 13/20
+  netinf|none                  top-1 20/20  rank mean 1.00  true score 0.159 (sd 0.107)  alg1 16/20  TPR@1% 11/20  TPR@5% 14/20
+  netinf_mm|prev_n_distinct    top-1 18/20  rank mean 1.10  true score 0.146 (sd 0.111)  alg1 15/20  TPR@1% 12/20  TPR@5% 13/20
+  lagged_netinf|none           top-1 20/20  rank mean 1.00  true score 0.336 (sd 0.085)  TPR@1% 20/20  TPR@5% 20/20
+  correlation|-                top-1 20/20  rank mean 1.00  true score 0.460 (sd 0.080)  TPR@1% 1/20  TPR@5% 4/20
+  judge|-                      top-1 10/20  rank mean 1.95  true score 50.400 (sd 23.132)
 
-C3 gated: n = 0 (held out 0), PC pass 0/6, compliance mean nan
+C3 gated: n = 0 (held out 0), PC pass 0/20, compliance mean nan
