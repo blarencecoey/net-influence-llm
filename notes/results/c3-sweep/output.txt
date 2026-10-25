@@ -41,6 +41,7 @@ C2 p=0.1 ungated: n = 6 (held out 6), PC pass 1/6, compliance mean 1.000
   netinf_mm|prev_n_distinct    top-1 5/6  rank mean 1.50  true score 0.008 (sd 0.036)  alg1 0/6  TPR@1% 0/6  TPR@5% 0/6
   lagged_netinf|none           top-1 3/6  rank mean 2.00  true score 0.032 (sd 0.022)  TPR@1% 0/6  TPR@5% 0/6
   correlation|-                top-1 2/6  rank mean 2.17  true score 0.236 (sd 0.037)  TPR@1% 0/6  TPR@5% 0/6
+  judge|-                      top-1 0/6  rank mean 5.83  true score 9.000 (sd 1.673)
 
 C2 p=0.1 gated: n = 1 (held out 1), PC pass 1/6, compliance mean 1.000
   netinf|prev_n_distinct       top-1 1/1  rank mean 1.00  true score 0.032 (sd nan)  alg1 0/1  TPR@1% 0/1  TPR@5% 0/1
@@ -48,6 +49,7 @@ C2 p=0.1 gated: n = 1 (held out 1), PC pass 1/6, compliance mean 1.000
   netinf_mm|prev_n_distinct    top-1 1/1  rank mean 1.00  true score 0.041 (sd nan)  alg1 0/1  TPR@1% 0/1  TPR@5% 0/1
   lagged_netinf|none           top-1 1/1  rank mean 1.00  true score 0.046 (sd nan)  TPR@1% 0/1  TPR@5% 0/1
   correlation|-                top-1 1/1  rank mean 1.00  true score 0.274 (sd nan)  TPR@1% 0/1  TPR@5% 0/1
+  judge|-                      top-1 0/1  rank mean 6.00  true score 8.000 (sd nan)
 
 C2 p=0.3 ungated: n = 6 (held out 6), PC pass 1/6, compliance mean 1.000
   netinf|prev_n_distinct       top-1 6/6  rank mean 1.00  true score 0.112 (sd 0.059)  alg1 5/6  TPR@1% 3/6  TPR@5% 3/6
@@ -55,6 +57,7 @@ C2 p=0.3 ungated: n = 6 (held out 6), PC pass 1/6, compliance mean 1.000
   netinf_mm|prev_n_distinct    top-1 6/6  rank mean 1.00  true score 0.118 (sd 0.070)  alg1 5/6  TPR@1% 3/6  TPR@5% 3/6
   lagged_netinf|none           top-1 6/6  rank mean 1.00  true score 0.079 (sd 0.017)  TPR@1% 0/6  TPR@5% 3/6
   correlation|-                top-1 5/6  rank mean 1.17  true score 0.402 (sd 0.039)  TPR@1% 0/6  TPR@5% 0/6
+  judge|-                      top-1 0/6  rank mean 6.00  true score 10.833 (sd 2.714)
 
 C2 p=0.3 gated: n = 1 (held out 1), PC pass 1/6, compliance mean 1.000
   netinf|prev_n_distinct       top-1 1/1  rank mean 1.00  true score 0.187 (sd nan)  alg1 1/1  TPR@1% 1/1  TPR@5% 1/1
@@ -62,6 +65,7 @@ C2 p=0.3 gated: n = 1 (held out 1), PC pass 1/6, compliance mean 1.000
   netinf_mm|prev_n_distinct    top-1 1/1  rank mean 1.00  true score 0.202 (sd nan)  alg1 1/1  TPR@1% 1/1  TPR@5% 1/1
   lagged_netinf|none           top-1 1/1  rank mean 1.00  true score 0.096 (sd nan)  TPR@1% 0/1  TPR@5% 1/1
   correlation|-                top-1 1/1  rank mean 1.00  true score 0.451 (sd nan)  TPR@1% 0/1  TPR@5% 0/1
+  judge|-                      top-1 0/1  rank mean 6.00  true score 8.000 (sd nan)
 
 C2 p=0.5 ungated: n = 6 (held out 6), PC pass 5/6, compliance mean 1.000
   netinf|prev_n_distinct       top-1 6/6  rank mean 1.00  true score 0.217 (sd 0.072)  alg1 5/6  TPR@1% 5/6  TPR@5% 6/6
@@ -69,6 +73,7 @@ C2 p=0.5 ungated: n = 6 (held out 6), PC pass 5/6, compliance mean 1.000
   netinf_mm|prev_n_distinct    top-1 6/6  rank mean 1.00  true score 0.228 (sd 0.079)  alg1 5/6  TPR@1% 5/6  TPR@5% 6/6
   lagged_netinf|none           top-1 6/6  rank mean 1.00  true score 0.117 (sd 0.031)  TPR@1% 4/6  TPR@5% 6/6
   correlation|-                top-1 6/6  rank mean 1.00  true score 0.561 (sd 0.040)  TPR@1% 0/6  TPR@5% 4/6
+  judge|-                      top-1 0/6  rank mean 5.33  true score 14.167 (sd 2.041)
 
 C2 p=0.5 gated: n = 5 (held out 5), PC pass 5/6, compliance mean 1.000
   netinf|prev_n_distinct       top-1 5/5  rank mean 1.00  true score 0.238 (sd 0.056)  alg1 4/5  TPR@1% 5/5  TPR@5% 5/5
@@ -76,6 +81,7 @@ C2 p=0.5 gated: n = 5 (held out 5), PC pass 5/6, compliance mean 1.000
   netinf_mm|prev_n_distinct    top-1 5/5  rank mean 1.00  true score 0.251 (sd 0.060)  alg1 4/5  TPR@1% 5/5  TPR@5% 5/5
   lagged_netinf|none           top-1 5/5  rank mean 1.00  true score 0.114 (sd 0.033)  TPR@1% 3/5  TPR@5% 5/5
   correlation|-                top-1 5/5  rank mean 1.00  true score 0.571 (sd 0.036)  TPR@1% 0/5  TPR@5% 4/5
+  judge|-                      top-1 0/5  rank mean 5.60  true score 14.000 (sd 2.236)
 
 C2 p=1 ungated: n = 6 (held out 6), PC pass 6/6, compliance mean 1.000
   netinf|prev_n_distinct       top-1 6/6  rank mean 1.00  true score 0.891 (sd 0.062)  alg1 6/6  TPR@1% 6/6  TPR@5% 6/6
@@ -83,7 +89,7 @@ C2 p=1 ungated: n = 6 (held out 6), PC pass 6/6, compliance mean 1.000
   netinf_mm|prev_n_distinct    top-1 6/6  rank mean 1.00  true score 0.916 (sd 0.061)  alg1 6/6  TPR@1% 6/6  TPR@5% 6/6
   lagged_netinf|none           top-1 0/6  rank mean 5.50  true score -0.030 (sd 0.013)  TPR@1% 0/6  TPR@5% 0/6
   correlation|-                top-1 6/6  rank mean 1.00  true score 1.000 (sd 0.000)  TPR@1% 6/6  TPR@5% 6/6
-  judge|-                      top-1 3/5  rank mean 2.20  true score 64.200 (sd 36.072)
+  judge|-                      top-1 4/6  rank mean 2.00  true score 68.167 (sd 33.695)
 
 C2 p=1 gated: n = 6 (held out 6), PC pass 6/6, compliance mean 1.000
   netinf|prev_n_distinct       top-1 6/6  rank mean 1.00  true score 0.891 (sd 0.062)  alg1 6/6  TPR@1% 6/6  TPR@5% 6/6
@@ -91,7 +97,7 @@ C2 p=1 gated: n = 6 (held out 6), PC pass 6/6, compliance mean 1.000
   netinf_mm|prev_n_distinct    top-1 6/6  rank mean 1.00  true score 0.916 (sd 0.061)  alg1 6/6  TPR@1% 6/6  TPR@5% 6/6
   lagged_netinf|none           top-1 0/6  rank mean 5.50  true score -0.030 (sd 0.013)  TPR@1% 0/6  TPR@5% 0/6
   correlation|-                top-1 6/6  rank mean 1.00  true score 1.000 (sd 0.000)  TPR@1% 6/6  TPR@5% 6/6
-  judge|-                      top-1 3/5  rank mean 2.20  true score 64.200 (sd 36.072)
+  judge|-                      top-1 4/6  rank mean 2.00  true score 68.167 (sd 33.695)
 
 C3 ungated: n = 6 (held out 6), PC pass 0/6, compliance mean 0.074
   netinf|prev_n_distinct       top-1 6/6  rank mean 1.00  true score 0.101 (sd 0.036)  alg1 6/6  TPR@1% 1/6  TPR@5% 3/6
@@ -99,5 +105,6 @@ C3 ungated: n = 6 (held out 6), PC pass 0/6, compliance mean 0.074
   netinf_mm|prev_n_distinct    top-1 6/6  rank mean 1.00  true score 0.107 (sd 0.030)  alg1 6/6  TPR@1% 2/6  TPR@5% 3/6
   lagged_netinf|none           top-1 6/6  rank mean 1.00  true score 0.561 (sd 0.191)  TPR@1% 6/6  TPR@5% 6/6
   correlation|-                top-1 6/6  rank mean 1.00  true score 0.444 (sd 0.040)  TPR@1% 0/6  TPR@5% 0/6
+  judge|-                      top-1 2/6  rank mean 2.67  true score 42.000 (sd 23.281)
 
 C3 gated: n = 0 (held out 0), PC pass 0/6, compliance mean nan
