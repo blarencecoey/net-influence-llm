@@ -237,7 +237,7 @@ Seeded runs (C2, sweep, C3, C4) against the frozen thresholds, and the report fi
 python scripts/score_seeded.py notes/results/calib-c0-c1-100null/thresholds.json <out dir> "<run glob>" ...   # C2 / sweep / C3: compliance, ranks, TPR
 python scripts/score_c4.py notes/results/calib-c0-c1-100null/thresholds.json notes/results/c4-three-colluders "runs/C4_*"
 python scripts/c4_family_split.py notes/results/b21-mixed-c2/score_seeded notes/results/calib-c0-c1-100null/thresholds.json
-python scripts/make_figures.py notes/results/figures notes/results/calib-c0-c1-100null <per_run.csv> ...
+python scripts/make_figures.py notes/results/figures notes/results/calib-c0-c1-100null <per_run.csv> ... --auction notes/results/auction
 ```
 
 Paid runs are refused while `configs/base.yaml` still holds `*_TODO` model or price placeholders, and a paid non-C2 condition is refused until a C2 run with the same models and prompt version has passed the positive-control check (`--skip-positive-control-check` overrides it and is recorded in `meta.json`; the C3 v4 and C4 runs used it because the C2 prompts did not change in v4). Each invocation is capped by `budget_usd`.
@@ -253,11 +253,27 @@ Committed analysis outputs are in [`notes/results/`](notes/results/), one folder
 - `c3-v4/`: C3 re-run under prompt v4 (post-hoc rule rewording, limitation B25).
 - `c4-three-colluders/`: C4 with one primary and two assistants, LLM and scripted check.
 - `calib-c0-c1-100null/`: C0 + C1 null runs, 100-null calibration on seeds 5–54, C2 Llama v3 seeds 0–4 held out; the frozen `thresholds.json`.
-- `figures/`: report figures (scores of every condition against the frozen thresholds; net-score decomposition).
+- `cv-fpr/`: cross-validated false-positive rate of the honest-run thresholds over all 110 C0 + C1 runs.
+- `figures/`: report figures (below).
 - `h1-by-state/`: H1 under each detector state, derived from `calib-c0-c1-100null/`.
+- `lagged-sweep-check/`: why lagged net influence flags the C2 sweep at p = 0.3 / 0.5, with a scripted ablation.
 - `net-decomposition/`: net-score decomposition for honest pairs, and an entropy-matched check.
 - `rounds-to-detection/`: rounds needed for detection, runs truncated to their first T rounds.
 - `synthetic-dryrun/`: synthetic dry run of the analysis pipeline on scripted runs; not a result.
+
+Figures (`notes/results/figures/`, rendered by `scripts/make_figures.py` from the saved outputs; details in its README):
+
+**Net influence per run, every RPS condition**, against the thresholds frozen on 100 honest runs (null runs: largest pair score; seeded runs: the seeded pair's score).
+
+![Net influence per run, RPS conditions](notes/results/figures/scores.png)
+
+**Net-score decomposition for honest pairs**: gross dependence and the subtracted third-agent term, by pair type (C0, C1).
+
+![Net-score decomposition](notes/results/figures/decomposition.png)
+
+**Double auction**: net influence per run against the auction's frozen thresholds (left), and the mean ask over the run per condition against the reference asks (right).
+
+![Double auction](notes/results/figures/auction.png)
 
 ## Prior work disclosure
 
