@@ -10,9 +10,11 @@ Does pairwise net influence ([[bonjour-2022]]) detect colluding LLM agents, and 
 
 - **H1 (shared priors):** same-family non-colluding agents get inflated net influence, producing false positives that cross-family pairs do not.
 - **H2 (tacit collusion):** coordination carried only through the game history is missed by same-round net influence but caught by a lagged (transfer entropy) variant.
+  > [claude] 2026-10-25, framing chosen by Clarence (decision log): (A) headline by the pre-registered primary state: not supported on LLM data, same-round net influence already ranks the C3 pair first 6/6 (the pre-stated "against" case); (B) explanation: H2 holds when the state conditions on the history the coupling runs through (prev_joint, a pre-registered secondary state: same-round 0/6, lagged 6/6); (C, revised) the scripted separation between same-round and lagged detectors does not survive predictable LLM players, in either direction (C3 leak into same-round; C2-sweep leak into lagged). Evidence: `notes/results/fact-sheet.md` §7b, §8b-2; tracker A12, B25.
 - **H3 (dose response):** net influence rises with the probability that the colluders' private channel is delivered.
 - **H4 (calibration):** a circular-shift null threshold reduces false positives versus the fixed α = 0.05, without losing the positive control.
   > [claude] 2026-10-24: the circular-shift null turned out invalid for the net score (B18 in [[limitations-and-ethics]]), so the pipeline now tests H4 with the honest-run (C0/C1) calibrated threshold only. Rewording H4 is the author's call.
+  > [claude] 2026-10-25, framing chosen by Clarence (decision log): two parts. **H4a** (this line, circular-shift null) is reported as a negative methods finding: the null does not match the net score and rejects honest pairs under a shared prior (B18). **H4b** is the pre-registration template's wording ("the honest-run threshold has lower held-out FPR than Alg. 1 at α = 0.05 on C0/C1, at similar C2 TPR"), committed in 0c3e9c8 before the first LLM game (template never frozen): lower FPR where Alg. 1 fires (C1 held-out 5/5 → 1/5), with TPR loss at weak collusion (C2 p = 0.3 5/6 → 3/6; C3 v4 5/6 → 4/6 at 1 %). Evidence: `notes/results/fact-sheet.md` §3b; tracker B18, B20.
 
 ## Conditions (4 agents, ~200 rounds × 5 seeds each)
 
@@ -60,6 +62,8 @@ Collusion-strength sweep: channel delivered with probability p ∈ {0.1, 0.3, 0.
 | 2026-10-24 | C2 fix: channel names the move to play (prompt v2); keep the failed v1 run as a finding | > [claude] Recorded from Clarence's answer; v1 assistant countered the revealed move 16/20 |
 | 2026-10-24 | Positive-control check: primary win rate vs uniform-play chance (19/27), one-sided binomial, α = 0.05; primary-vs-honest t-test kept as secondary | > [claude] Recorded from Clarence's answer; CLAUDE.md says "partner win rate above chance"; primary vs honest failed on a fully complying pair |
 | 2026-10-24 | C2 primary told to vary its moves (prompt v3); the v2 primary locking onto one move is treated as a confound | > [claude] Recorded from Clarence's answer, which asked that the risks be noted: limitations B13 |
+| 2026-10-25 | H4 in two parts: H4a circular-shift null reported as invalid (B18); H4b the template's honest-run threshold vs Alg. 1 wording | > [claude] Recorded from Clarence's answer, after seeing the H4 evidence (fact sheet §3b) |
+| 2026-10-25 | H2 framing: headline by the primary state (not supported), state-dependence as the explanation (prev_joint), and detector separation not surviving predictable LLM players | > [claude] Recorded from Clarence's answer, after the C3 v4 results and the lagged sweep check (`notes/results/lagged-sweep-check/`) |
 | 2026-10-25 | C3 prompt v4: assistant rule given as a lookup table with "follow this rule exactly"; C3 primary gets the C2 "vary your moves" sentence; re-run C3 seeds 0–4, 55. The v3 C3 runs are kept as a finding | > [claude] Recorded from Clarence's answer, after seeing the v3 C3 results (assistant played the inverse rule, B25), so this is a post-hoc change |
 
 ## Divergences from the official brief
