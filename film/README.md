@@ -32,7 +32,17 @@ cd film && sh build.sh
 
 ## What was tested (and how)
 
-RESULTS_PLACEHOLDER
+All run on 2026-10-25 in the build container.
+
+- **Outputs:** `ffprobe` shows each cut at 75.000 s and 30 fps with one H.264 and one AAC stream. Sizes: 16:9 1920×1080, 9:16 1080×1920, 1:1 1080×1080.
+- **Video determinism:** the same frames (t = 34.5 s and 52.3 s, 16:9) were rendered twice and `cmp` found them byte-identical (`review/determinism/`).
+- **Audio determinism:** three offline renders were **not** bit-identical. They differ by at most 1 LSB (16-bit) on 576–625 of 6,615,000 samples. That is inaudible, but it is not exact.
+- **Loudness** (`ffmpeg -af ebur128=peak=true` on `out/master_16x9.mp4`): integrated −16.0 LUFS, true peak −1.5 dBFS, after a two-pass `loudnorm` (I = −16, TP = −1.5).
+- **Caption reading time:** every caption is on screen for at least max(1.5 s, 0.3 s × words). Two failed this check and were reworded (see `DECISIONS.md`).
+- **Stills at every beat midpoint** in all three aspects (`stills/`). Readability sheets at 390 px wide for 9:16 and 1:1 are in `review/at390_*.png`. Captions and headlines are readable at that width; agent tags and footnotes are marginal in 1:1.
+- **Reduced-motion cut:** frames pulled from both cuts at 5, 25.15, 34.5 and 57 s (`review/final/master_vs_reduced.png`). Mid-tween, the reduced cut shows a cut where the master shows movement (the bar at 25.15 s). Settled frames match.
+- **Design review:** a fresh-context subagent reviewed the stills against `SCENES.md`. Its fixes have before/after pairs in `review/pair_*.png`. It found no colour-only signals and nothing that flashes. It checked the on-screen numbers against `SOURCES.md` and they match.
+- **Not done:** the full film was not watched end to end by a person. The muted and audio-only passes were not done by ear. I only checked muted frames as stills and confirmed the audio cue list against `TIMELINE.cues`.
 
 ## Known limitations
 
