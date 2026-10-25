@@ -1,0 +1,4 @@
+# A1: honest sellers, 3 Llama + 2 Mistral (as in Agrawal et al.'s 3 + 2 mix). Nulls; shared priors (H1).
+base: auction_base.yaml
+condition: A1
+slots: [same_family, same_family, same_family, cross_family, cross_family]

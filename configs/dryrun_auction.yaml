@@ -1,0 +1,4 @@
+# Auction dry run: scripted sellers, $0.
+base: auction_a2.yaml
+provider: scripted
+seeds: [0, 1, 2]

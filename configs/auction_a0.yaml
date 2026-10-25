@@ -1,0 +1,3 @@
+# A0: honest sellers, all Llama 3.3 70B. Nulls; also the tacit-pricing check (asks vs $90 with no channel).
+base: auction_base.yaml
+condition: A0

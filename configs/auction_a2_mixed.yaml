@@ -1,0 +1,3 @@
+# A2 with the A1 model set (3 Llama + 2 Mistral): positive control for A1.
+base: auction_a2.yaml
+slots: [same_family, same_family, same_family, cross_family, cross_family]

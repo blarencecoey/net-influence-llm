@@ -24,6 +24,7 @@ Everything committed on or after Oct 23, 2026. The git history is the record; th
 - 2026-10-24: detector, scripted RPS, correlation baseline, tests, Table 2 reproduction and scripted 4-agent comparison scripts (with Claude as coding colleague).
 - > [claude] 2026-10-24 (with Claude as coding colleague): LLM RPS harness and runner, LLM-judge baseline, analysis pipeline with calibrated thresholds, results viewer; C2 prompts v1–v3; all LLM runs (C2, C0, C1, mixed C2) and judge runs; removal of the circular-shift test (B18); scripted lockstep control; re-analyses in `notes/results/`. Commits `0c3e9c8` to `5e0f050`.
 - > [claude] 2026-10-25: C3 and H3-sweep LLM runs (`configs/c3.yaml`, `configs/c2_sweep_low.yaml`) and their analysis.
+- > [claude] 2026-10-25: double-auction environment (`src/netinf/envs/auction.py`, `src/netinf/agents/auction_agent.py`, `scripts/run_auction.py`), written from the description in Agrawal et al. 2025 (arXiv 2507.01413, Sec. 2.1). No code or prompt text from their repository (https://github.com/andyjliu/llm-agent-collusion, no license file per the GitHub API on 2026-10-25) was used.
 
 ## External code used
 

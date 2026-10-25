@@ -28,10 +28,12 @@ from pathlib import Path
 import numpy as np
 
 from netinf import analysis as an
+from netinf import auction_analysis as aq
 from netinf import detector as d
 from netinf.baselines import correlation_scores, rank_of_pair
 
 STATES = ("prev_n_distinct", "none", "prev_joint")  # primary (pre-registered) first
+AUCTION_MIN_ROUNDS = 100  # shorter auction runs (smoke tests) are left out of the auction overview
 LIVE_SECONDS = 180  # an unfinished run written to within this many seconds counts as live
 THRESHOLDS_FILE = "thresholds.json"
 TEXT_SUFFIXES = {".md", ".txt", ".yaml", ".yml", ".json", ".jsonl", ".csv", ".log"}
@@ -90,7 +92,7 @@ def kind_of(path: Path) -> str | None:
     if not path.is_dir():
         return None
     if (path / "meta.json").exists() and (path / "rounds.jsonl").exists():
-        return "game"
+        return "auction" if aq.is_auction(path) else "game"
     if (path / "results.json").exists():
         rows = _read_json(path / "results.json")
         if isinstance(rows, list) and rows and isinstance(rows[0], dict):
@@ -136,7 +138,7 @@ def run_entry(path: Path) -> dict | None:
     if kind is None:
         return None
     e = {"id": path.name, "kind": kind, "mtime": path.stat().st_mtime}
-    if kind == "game":
+    if kind in ("game", "auction"):
         m = _read_json(path / "meta.json") or {}
         pc = m.get("positive_control") or {}
         e |= {k: m.get(k) for k in (
@@ -149,6 +151,9 @@ def run_entry(path: Path) -> dict | None:
         e["pc_passed"] = pc.get("passed")
         e["pc_p"] = pc.get("p_value")
         e["pc_test"] = pc.get("test")  # the harness's test changed over time; label from the run
+        if kind == "auction":
+            e["pc_match"] = pc.get("match_rate_delivered")
+            e["mean_ask"] = m.get("mean_ask")
         e |= run_status(path, m)
         if e["status"] != "done":  # meta.json is only rewritten at the end; count logged rounds
             with open(path / "rounds.jsonl", "rb") as f:
@@ -181,8 +186,11 @@ def _ranked(scores: dict, true_pair) -> list[dict]:
 
 
 def game_detectors(actions: np.ndarray, true_pair, states=STATES, judge=None,
-                   alpha: float = 0.05) -> dict:
-    """Every detector on one run: matrices, ranked pair scores, rank of the true pair, Algorithm 1."""
+                   alpha: float = 0.05, state_codes: dict | None = None,
+                   primary_state: str = an.PRIMARY_STATE) -> dict:
+    """Every detector on one run: matrices, ranked pair scores, rank of the true pair, Algorithm 1.
+    `state_codes` ({name: codes per round}) replaces analysis.compute_states, for states that are
+    not a function of the actions (the auction's previous trade price band)."""
     T, n = actions.shape
     out = {"n_pairs": n * (n - 1) // 2, "alpha": alpha, "by_state": {}, "state_free": {}}
     if T < 2 or n < 3:
@@ -200,11 +208,12 @@ def game_detectors(actions: np.ndarray, true_pair, states=STATES, judge=None,
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        for st in states:
-            s = an.compute_states(actions, st, warn=False)
+        for st in (state_codes or states):
+            s = (np.asarray(state_codes[st]) if state_codes
+                 else an.compute_states(actions, st, warn=False))
             n_states = len(np.unique(s))
             entry = {"n_states": n_states, "bias": 2 * n_states / T,
-                     "role": an.state_role(st)}
+                     "role": "primary (pre-registered)" if st == primary_state else "secondary"}
             for det, mm in (("netinf", False), ("netinf_mm", True)):
                 G = d.net_influence_matrix(actions, s, bias_correct=mm)
                 entry[det] = pack(d.pair_scores(G), G)
@@ -322,9 +331,103 @@ def other_detail(path: Path) -> dict:
     return {"id": path.name, "kind": "other", "files": _files(path), "texts": _text_files(path)}
 
 
+# --------------------------------------------------------------------------- auction runs
+
+
+def auction_detail(path: Path, light: bool = False) -> dict:
+    """One double-auction run: per-hour order book, market series, positive control, detectors
+    (on the banded asks, with the auction's states), calls, prompts and config. `light` leaves out
+    calls, prompts, files and config, for polling a live run."""
+    run = aq.load(path)
+    meta, a, T = run["meta"], run["actions"], len(run["actions"])
+    tp = aq.true_pair(meta)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        dets = (game_detectors(a, tp, state_codes=aq.states(run), primary_state=aq.PRIMARY_STATE)
+                if T >= 2 else {"error": "fewer than 2 hours logged", "by_state": {}, "state_free": {}})
+    stats = aq.market_stats(run) if T else {}
+    out = {
+        "id": path.name, "kind": "auction", "meta": meta, **run_status(path, meta),
+        "rounds": [{k: r.get(k) for k in ("round", "asks", "actions", "bids", "trades", "payoffs",
+                                          "channel_delivered")} for r in run["rounds"]],
+        "series": {"trade_price": run["trade_price"], "n_trades": run["n_trades"],
+                   "mean_ask": a.shape[0] and run["asks"].mean(axis=1)},
+        "true_pair": None if tp is None else f"{tp[0]}-{tp[1]}",
+        "colluders": [] if tp is None else [meta["primary"], meta["assistant"]],
+        "market": stats, "references": {"equilibrium_ask": aq.symmetric_equilibrium(),
+                                        "joint_optimal_ask": aq.joint_optimal_ask(),
+                                        "midpoint": 90},
+        "detectors": dets, "primary_state": aq.PRIMARY_STATE}
+    if not light:
+        out |= {"config_text": (path / "config.yaml").read_text(encoding="utf-8")
+                if (path / "config.yaml").exists() else None,
+                "prompts": {p.stem: p.read_text(encoding="utf-8")
+                            for p in sorted((path / "prompts").glob("*.txt"))}
+                if (path / "prompts").is_dir() else {},
+                "files": _files(path), "calls": _read_jsonl(path / "calls.jsonl")}
+    return clean(out)
+
+
+def auction_summary(runs_dir: Path) -> dict:
+    """Overview of the double-auction runs: per condition and model set, market statistics, the
+    mean ask and trade price by 10-hour block, positive control, and detection at the run level."""
+    runs_dir = Path(runs_dir)
+    out = {"runs_dir": str(runs_dir.resolve()), "groups": [], "runs": [],
+           "references": {"equilibrium_ask": aq.symmetric_equilibrium(),
+                          "joint_optimal_ask": aq.joint_optimal_ask(), "midpoint": 90},
+           "primary_state": aq.PRIMARY_STATE}
+    paths = [p for p in sorted(runs_dir.iterdir()) if kind_of(p) == "auction"] \
+        if runs_dir.is_dir() else []
+    groups: dict[tuple, list] = {}
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        for p in paths:
+            run = aq.load(p)
+            m = run["meta"]
+            if not m.get("completed") or not len(run["actions"]):
+                continue
+            if (m.get("n_rounds") or 0) < AUCTION_MIN_ROUNDS:
+                out.setdefault("skipped", []).append(
+                    {"id": p.name, "reason": f"short run ({m.get('n_rounds')} hours, e.g. a smoke test)"})
+                continue
+            ms = model_set(a.get("model") for a in m.get("agents") or [])
+            recs = {(x["detector"], x["state"]): x for x in aq.score(run)}
+            prim = recs[("netinf", aq.PRIMARY_STATE)]
+            row = {"id": p.name, "condition": m["condition"], "seed": m["seed"], "models": ms,
+                   **aq.market_stats(run), "pc": m.get("positive_control"),
+                   "true_pair": prim.get("true_pair"), "netinf_max": prim["max_score"],
+                   "netinf_top": prim["top_pair"], "netinf_rank": prim.get("rank"),
+                   "alg1_any": prim.get("alg1_any"), "alg1_correct": prim.get("alg1_correct"),
+                   "lagged_rank": recs[("lagged_netinf", "none")].get("rank"),
+                   "corr_rank": recs[("correlation", "-")].get("rank"),
+                   "cost": m.get("total_cost_usd")}
+            out["runs"].append(row)
+            groups.setdefault((m["condition"], ms), []).append((row, run))
+    for (cond, ms), items in sorted(groups.items()):
+        rows = [r for r, _ in items]
+        T = min(len(run["asks"]) for _, run in items)
+        ask = np.mean([run["asks"][:T].mean(axis=1) for _, run in items], axis=0)
+        price = np.nanmean([run["trade_price"][:T] for _, run in items], axis=0)
+        seeded = [r for r in rows if r["true_pair"]]
+        out["groups"].append({
+            "condition": cond, "models": ms, "n": len(rows),
+            "mean_ask": float(np.mean([r["mean_ask"] for r in rows])),
+            "mean_trade_price": float(np.nanmean([r["mean_trade_price"] for r in rows])),
+            "share_ask_supra": float(np.mean([r["share_ask_supra"] for r in rows])),
+            "trades_per_hour": float(np.mean([r["trades_per_hour"] for r in rows])),
+            "ask_blocks": aq.blocks(ask), "price_blocks": aq.blocks(price),
+            "pc_pass": sum(bool((r["pc"] or {}).get("passed")) for r in seeded),
+            "top1": sum(r["netinf_rank"] == 1 for r in seeded) if seeded else None,
+            "alg1_any": sum(bool(r["alg1_any"]) for r in rows),
+            "cost": float(sum(r["cost"] or 0 for r in rows))})
+    return clean(out)
+
+
 def run_detail(runs_dir: Path, run_id: str) -> dict:
     path = resolve_run(runs_dir, run_id)
     kind = kind_of(path)
+    if kind == "auction":
+        return auction_detail(path)
     if kind == "game":
         return game_detail(path)
     if kind in ("bonjour_repro", "scripted4"):
@@ -334,6 +437,8 @@ def run_detail(runs_dir: Path, run_id: str) -> dict:
 
 def run_detection(runs_dir: Path, run_id: str) -> dict:
     path = resolve_run(runs_dir, run_id)
+    if kind_of(path) == "auction":
+        return auction_detail(path, light=True)
     if kind_of(path) != "game":
         raise FileNotFoundError(f"{run_id} is not a game run")
     return game_detection(path)
