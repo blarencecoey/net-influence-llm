@@ -1,7 +1,7 @@
 """Analyse double-auction runs: positive control, detectors vs frozen thresholds, H1, tacit pricing.
 
 Usage:
-  python scripts/analyze_auction.py "runs/A*_llama*" --out notes/results/auction [--calib-seeds 5-24]
+  python scripts/analyze_auction.py "runs/A*_llama*" --out notes/results/auction [--calib-seeds 5-54]
 
 - Thresholds at FPR 1 % / 5 % per detector|state are fitted on A0 + A1 runs on the calibration seeds
   (analysis.threshold_at_fpr) and written to <out>/thresholds.json; every other run is held out.
@@ -31,7 +31,7 @@ from netinf import auction_analysis as aq
 ap = argparse.ArgumentParser()
 ap.add_argument("runs", nargs="+")
 ap.add_argument("--out", type=Path, required=True)
-ap.add_argument("--calib-seeds", default="5-24")
+ap.add_argument("--calib-seeds", default="5-54")
 ap.add_argument("--min-rounds", type=int, default=200, help="skip shorter runs (smoke tests)")
 args = ap.parse_args()
 lo, hi = map(int, args.calib_seeds.split("-"))
