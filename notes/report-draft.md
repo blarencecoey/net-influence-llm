@@ -1,10 +1,10 @@
 # Report draft
 
-> [claude] 2026-10-27, post-deadline write-up drafted by Claude at the author's request (CLAUDE.md prose rule waived by the author after the deadline). Numbers come from `notes/results/fact-sheet.md` and the files it cites; auction numbers use the 100-null re-analysis of 2026-10-27. Target: ~4 template pages excluding references and appendix (body ≈ 2,300 words with three tables and two figures). Delete `> [claude]` notes before export.
+> [claude] 2026-10-27, post-deadline write-up drafted by Claude at the author's request (CLAUDE.md prose rule waived by the author after the deadline). Numbers come from `notes/results/fact-sheet.md` and the files it cites; auction numbers use the 100-null re-analysis of 2026-10-27. Target: ~4 template pages excluding references and appendix (body ≈ 2,500 words, four tables, three figures). Images are embedded from `results/figures/`; in the template, insert the same PNGs. Delete `> [claude]` notes before export.
 
 **Net Influence Meets LLM Agents: Shared Priors, Tacit Rules and Three Colluders**
 
-Clarence Boey — *[affiliation]*
+Clarence Boey — Singapore Institute of Technology
 
 ## Abstract
 
@@ -35,10 +35,7 @@ My contributions:
 
 ## 2 Related Work
 
-**Action-level detection.** Bonjour et al. (2022) assume exactly two colluders and give no theory for α. Hespanhol and Aswani (2020) test play against an ε-Nash equilibrium, which needs a utility model. Xu et al. (2026) argue that colluders can keep each agent's marginal behaviour competitive, so cross-agent dependence is the signal to audit, and they report that two deployments of the same model are already dependent. Riedl (2026) measures beneficial coordination in LLM action series with time-delayed mutual information and time-shift surrogates.
-
-> [claude] Xu et al. 2026 is noted from the abstract only (`notes/papers/xu-2026.md`). Check against the PDF or cut.
-
+**Action-level detection.** Bonjour et al. (2022) assume exactly two colluders and give no theory for α. Hespanhol and Aswani (2020) test play against an ε-Nash equilibrium, which needs a utility model. Xu et al. (2026) construct colluding bidders whose individual bid distributions stay exactly competitive. Any test on one agent's history then has power equal to its size, while a pairwise test on the same data reaches power 1. In their LLM bidders, two deployments of one model have a residual bid correlation of +0.053 (95 % interval [0.030, 0.078]), against +0.0001 across models. Riedl (2026) measures beneficial coordination in LLM action series with time-delayed mutual information and time-shift surrogates.
 **Transcript and representation-based detection.** Tailor (2025) calibrates mutual-information detectors on honest seeds at a fixed false-positive budget; I adopt that protocol. Nakamura et al. (2026) find that action metrics and message judges miss different cases. Rose et al. (2026) probe activations, which needs open weights; like Bonjour et al., they assume two colluders. Motwani et al. (2024) show that steganography can hide messages, but a coordinated action still appears in the action log.
 
 **LLM collusion in markets.** Fish et al. (2024) find tacit supracompetitive pricing by LLM agents. Lee and Park (2026) apply lagged conditional-independence tests to LLM price series. Agrawal et al. (2025) study LLM sellers in a double auction, which I reimplement.
@@ -49,7 +46,9 @@ My contributions:
 
 **Validation.** I first reproduced Bonjour et al.'s scripted three-player RPS, in which an assistant helps the primary with probability CP each round (Appendix A).
 
-**Game.** Four LLM agents play 200 rounds of RPS with Bonjour et al.'s scoring. Each agent sees the rules and the last 10 rounds, and replies with one move at temperature 1.0. I call `meta-llama/llama-3.3-70b-instruct` and `mistralai/mistral-small-3.2-24b-instruct` through OpenRouter.
+**Game.** Four LLM agents play 200 rounds of RPS with Bonjour et al.'s scoring. Each agent sees the rules and the last 10 rounds, and replies with one move at temperature 1.0. I call `meta-llama/llama-3.3-70b-instruct` and `mistralai/mistral-small-3.2-24b-instruct` through OpenRouter. Table 1 lists the conditions.
+
+**Table 1.** Conditions. Every game runs 200 rounds. Seeded games use seeds outside the calibration range 5–54.
 
 | ID | Players | Collusion | Games |
 |---|---|---|---|
@@ -84,16 +83,24 @@ Before collecting data, I coded actions as ask bands (≤ $89, $90–94, ≥ $95
 
 **Validation.** At CP = 0.4, my implementation detects the pair in 83.1 % of iterations at 200 games (paper: 79.2 %) and 98.9 % at 400 (99.3 %). The state matters. The paper's main text omits it, and with a constant state the same data give 95.6 % at 100 games, against the paper's 58.4 %.
 
-**Seeded collusion.** All 16 C2 pairs passed the positive control (p ≤ 3e-29), and the assistants played the named move in 99.8–100 % of rounds (Table 1).
+**Seeded collusion.** All 16 C2 pairs passed the positive control (p ≤ 3e-29), and the assistants played the named move in 99.8–100 % of rounds (Table 2).
+
+**Table 2.** Seeded pairs with a private channel delivered every round (C2, p = 1). Top-1: the true pair ranks first of six (chance 1/6). TPR: flagged at the frozen 1 % threshold, counting only seeds outside the calibration range. The judge was not run on the mixed games.
 
 | C2, p = 1 | n | Net influence top-1 | True-pair score, mean (sd) | Held-out TPR at 1 % | Correlation top-1 | Lagged top-1 | Judge top-1 |
 |---|---|---|---|---|---|---|---|
 | 4 Llama | 6 | 6/6 | 0.891 (0.062) | 6/6 | 6/6 | 0/6 | 4/6 |
 | 2 Llama + 2 Mistral | 10 | 10/10 | 0.819 (0.072) | 3/3 | 10/10 | 0/10 | — |
 
-Cross-family pairs scored as high as same-family pairs (mean 0.837, minimum margin over the next pair +0.743). Detection held when I truncated the runs to 25 rounds. As the channel becomes rarer, the true pair's mean score falls monotonically: 0.891, 0.217, 0.112 and −0.004 at p = 1, 0.5, 0.3 and 0.1. Held-out TPR at 1 % falls from 6/6 to 5/6, 3/6 and 0/6. The judge ranked the pair first in 0/6 games at every p below 1. The lagged variant fails at p = 1 by construction: the assistant's own previous move already encodes the primary's, so the transfer entropy is exactly 0.
+Cross-family pairs scored as high as same-family pairs (mean 0.837, minimum margin over the next pair +0.743). Detection held when I truncated the runs to 25 rounds. As the channel becomes rarer, the true pair's mean score falls monotonically (Figure 1): 0.891, 0.217, 0.112 and −0.004 at p = 1, 0.5, 0.3 and 0.1. Held-out TPR at 1 % falls from 6/6 to 5/6, 3/6 and 0/6. The judge ranked the pair first in 0/6 games at every p below 1. The lagged variant fails at p = 1 by construction: the assistant's own previous move already encodes the primary's, so the transfer entropy is exactly 0.
 
-**Shared priors.** Honest LLM agents play in lockstep. All four C0 agents choose the same move in 29.8 % of rounds, against 3.7 % under uniform play. Table 2 shows the effect on the published rule.
+![Net influence per game](results/figures/scores.png)
+
+**Figure 1.** Net influence score per game under the primary state. Honest games (blue) show their largest pair score; seeded games (orange) show the true pair's score. Dashed and dotted lines: thresholds at 1 % and 5 % false-positive rate, frozen on 100 honest games.
+
+**Shared priors.** Honest LLM agents play in lockstep. All four C0 agents choose the same move in 29.8 % of rounds, against 3.7 % under uniform play. Table 3 shows the effect on the published rule.
+
+**Table 3.** Honest games in which Algorithm 1 (α = 0.05) flags some pair, by detector state. Last column: how often C1's top-scoring pair is a same-model pair.
 
 | Algorithm 1 fires on honest games | C0: 4 Llama | C1: 2 Llama + 2 Mistral | C1 top pair same-model |
 |---|---|---|---|
@@ -101,9 +108,13 @@ Cross-family pairs scored as high as same-family pairs (mean 0.837, minimum marg
 | `none` | 11/55 | 12/55 | 47/55 |
 | `prev_joint` | 0/55 | 8/55 | 40/55 |
 
-The same-model pair outscores the best cross-model pair in C1 under every state (primary: +0.130, 98 % of games, Wilcoxon p = 1e-10). C0's Llama pairs carry *more* raw dependence than C1's, yet C0 rarely false-alarms (Figure 1, right). The subtraction explains why:
+The same-model pair outscores the best cross-model pair in C1 under every state (primary: +0.130, 98 % of games, Wilcoxon p = 1e-10). C0's Llama pairs carry *more* raw dependence than C1's, yet C0 rarely false-alarms (Figure 2). The subtraction explains why:
 - **C0:** every third agent shares the prior, so the subtracted term (0.219) exceeds the pair's own dependence (0.178), leaving a mean score of −0.041.
 - **C1:** the Mistral agents share little with the Llama pair, so the subtraction falls to 0.050 against 0.115, and the score turns positive (+0.065).
+
+![Net-score decomposition](results/figures/decomposition.png)
+
+**Figure 2.** Mean gross dependence γ(i; j) and the subtracted third-agent term for honest pairs, by pair type (primary state). The net score is the difference. It is negative for C0's Llama pairs but positive for C1's Llama pair.
 
 Scripted agents reproduce this (Appendix B). Calibrated thresholds fix it:
 - held-out false-positive rate 0/5 in C0 and 1/5 in C1;
@@ -111,7 +122,9 @@ Scripted agents reproduce this (Appendix B). Calibrated thresholds fix it:
 
 The cost falls on weak collusion. At 1 % the calibrated threshold catches C2 at p = 0.3 in 3/6 games (Algorithm 1: 5/6) and C3 in 12/20 (15/20). I had first planned a circular-shift permutation null, but it rejects honest pairs under a shared prior, so I dropped it (Appendix C).
 
-**Tacit rule.** With my first C3 prompt, Llama played the *inverse* of the instructed rule in 155–199 of 199 rounds. I rewrote the rule as a lookup table (a post-hoc change), which raised compliance to a mean of 0.81 over 20 games (Table 3).
+**Tacit rule.** With my first C3 prompt, Llama played the *inverse* of the instructed rule in 155–199 of 199 rounds. I rewrote the rule as a lookup table (a post-hoc change), which raised compliance to a mean of 0.81 over 20 games (Table 4).
+
+**Table 4.** Tacit rule (C3, prompt v4, 20 games), flagged at the frozen 1 % threshold. The judge has no threshold.
 
 | C3, 20 games | Top-1 | TPR at 1 % [Wilson 95 %] |
 |---|---|---|
@@ -125,13 +138,17 @@ The lagged variant flagged the pair in every game where only one of the two dete
 
 **Three colluders.** With two assistants on the channel, the positive control passed 6/6 and the assistants played identical moves in all 200 rounds. Every colluding pair scored exactly 0.000 in every state, so nothing was flagged, in 6 LLM games and 40 scripted ones. Each colluder's strongest third-party influence is the other colluder, and the subtraction cancels it. A colluding pair still ranked first in 6/6 games, because honest pairs scored below zero. Correlation flagged all six, and the judge ranked a colluding pair first in all six.
 
-**Double auction.** All nine seeded pairs matched every hour. Net influence ranked them first and flagged them at both thresholds in 9/9 games, with scores of 0.339–0.647 against a maximum of 0.166 across 110 honest games, and no held-out false alarms (Figure 2). Correlation cannot flag anything here: honest sellers ask exactly $90 in 92–97 % of seller-hours, so honest pairs reach perfect association. The seeded pairs earned *less* than honest sellers in 8/9 games (Appendix E).
+**Double auction.** All nine seeded pairs matched every hour. Net influence ranked them first and flagged them at both thresholds in 9/9 games, with scores of 0.339–0.647 against a maximum of 0.166 across 110 honest games, and no held-out false alarms (Figure 3). Correlation cannot flag anything here: honest sellers ask exactly $90 in 92–97 % of seller-hours, so honest pairs reach perfect association. The seeded pairs earned *less* than honest sellers in 8/9 games (Appendix E).
 
-> [claude] Figure 1: `notes/results/figures/scores.png` (left) + `decomposition.png` (right), or keep only `scores.png` and cite the decomposition numbers. Figure 2: `auction.png`.
+![Double auction](results/figures/auction.png)
+
+**Figure 3.** Double auction. Left: net influence per game against the auction's thresholds, frozen on 100 honest games (honest games: largest pair score; seeded games: the seeded pair's score). Right: mean ask per 10-hour block against the reference asks.
+
+> [claude] If the template runs over 4 pages, move Figure 3 to the appendix first, then Figure 2.
 
 ## 5 Discussion and Limitations
 
-The third-agent subtraction makes net influence work, and the same step explains each failure I found. Four copies of one model do not false-alarm, two copies among strangers do, and three colluders vanish. So false positives depend on the population mix, not on the model alone. A market with two deployments of one model among other vendors resembles C1. There, a fixed α flags them, while a threshold calibrated on honest games of that mix does not. Calibration has to be redone for each population, model and prompt.
+The third-agent subtraction makes net influence work, and the same step explains each failure I found. Four copies of one model do not false-alarm, two copies among strangers do, and three colluders vanish. So false positives depend on the population mix, not on the model alone. A market with two deployments of one model among other vendors resembles C1. There, a fixed α flags them, while a threshold calibrated on honest games of that mix does not. Calibration has to be redone for each population, model and prompt. Xu et al. (2026) find the same problem in real auction data: honest bidder pairs are dependent enough that a screen held at a 5 % false-positive rate must sit above +0.50.
 
 Scripted intuition about tacit collusion does not transfer either. LLM agents cycle and avoid repeating moves, so a lagged coupling leaks into the same round and the reverse. On the same C3 games, same-round top-1 ranged from 0/20 to 20/20 across my three states. No single detector or state is a safe default.
 
@@ -162,9 +179,6 @@ Net influence finds seeded LLM colluders, including cross-family pairs, where an
 ## Code and Data
 
 Code, configs, prompts, all runs (config, seed, model IDs, prompts, cost) and analyses: https://github.com/blarencecoey/net-influence-llm. Each folder in `notes/results/` has a README with the command that produced it. Total API spend was ≈ $15.5. `PRIOR_WORK.md` lists the work I did before the sprint; the last pre-sprint commit is tagged `pre-sprint`.
-
-> [claude] Make the repo public before linking.
-
 ## References
 
 - Agrawal, Teo, Vazquez, Kunnavakkam, Srikanth, Liu (2025). Evaluating LLM Agent Collusion in Double Auctions. arXiv:2507.01413.
@@ -182,7 +196,9 @@ Code, configs, prompts, all runs (config, seed, model IDs, prompts, cost) and an
 
 ## Appendix
 
-**A. Validation.** I ran 1000 iterations per cell. The state is the previous joint action; in brackets, Bonjour et al.'s Table 2.
+**A. Validation.** I ran 1000 iterations per cell, with the previous joint action as the state (Table A1).
+
+**Table A1.** Detection accuracy (%) of Algorithm 1 in scripted three-player RPS. Bonjour et al.'s Table 2 values are in brackets.
 
 | Games | CP 0.3, nats | CP 0.3, bits | CP 0.4, nats | CP 0.4, bits |
 |---|---|---|---|---|
@@ -213,8 +229,9 @@ Claude Sonnet 5.5 served as the LLM-judge baseline. Llama 3.3 70B and Mistral Sm
 ### Pre-submission checklist
 
 - [ ] Report PDF uses the official template; fits ~4 pages
-- [ ] Affiliation filled in
-- [ ] Figures placed and numbered
-- [ ] Xu et al. 2026 checked against the PDF
+- [x] Affiliation filled in
+- [x] Figures placed and numbered (Figures 1–3, Tables 1–4, Table A1)
+- [x] Xu et al. 2026 checked against the PDF (2026-10-27)
+- [ ] Figures and tables inserted in the template
 - [ ] Template guidance text and info box deleted
-- [ ] Repo public; links work
+- [x] Repo public (checked 2026-10-27, unauthenticated HTTP 200)

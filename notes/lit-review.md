@@ -55,4 +55,4 @@ Official research-question brief: [[track-brief]].
 
 - Das et al. 2026, "You Can't Escape Your Own Activations" (arXiv 2609.03035): PDF not machine-readable when checked; known only via [[rose-2026]].
 - Other papers on the sprint page not yet read: Keppo et al. 2026, Eschenbaum et al. 2022, Aharon et al. 2026, Rippin et al. 2026, Collina et al. 2025, Bracale Syrnikov et al. 2026, Dhanda 2026, Liu et al. 2026, Tomašev et al. 2026.
-- [[xu-2026]] and [[agrawal-2025]] read from abstract/summary; confirm numbers from PDFs before citing.
+- [[agrawal-2025]] read from summary; confirm numbers from the PDF before citing. > [claude] [[xu-2026]] checked against the PDF 2026-10-27; its temperature result is stated inconsistently in the paper (see note).
